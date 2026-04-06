@@ -57,11 +57,12 @@ body::before {
 }
 
 .topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.15rem 0.2rem 0.85rem;
+  position: relative;
+  padding: 0.15rem 3.4rem 0.95rem;
+}
+
+.topbar h1 {
+  text-align: center;
 }
 
 .eyebrow {
@@ -119,6 +120,9 @@ button:disabled {
 }
 
 .icon-button {
+  position: absolute;
+  top: 0.1rem;
+  right: 0;
   display: inline-grid;
   place-items: center;
   width: 2.9rem;
@@ -181,7 +185,7 @@ button:disabled {
 
 .bingo-board {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--grid-size, 4), minmax(0, 1fr));
   gap: 0.5rem;
 }
 
@@ -223,46 +227,29 @@ button:disabled {
   position: absolute;
   inset: 0;
   z-index: 1;
-  display: flex;
-  flex-direction: column;
+  display: grid;
   align-items: center;
-  justify-content: center;
-  gap: 0.3rem;
-  padding: 0.45rem 0.35rem;
+  justify-items: center;
+  padding: 0;
   color: var(--earth-dark);
 }
 
-.bingo-tile-icon {
-  font-size: clamp(1.8rem, 7vw, 2.8rem);
+.bingo-tile-number {
+  font-size: clamp(2rem, 11vw, 3.4rem);
+  font-weight: 900;
   line-height: 1;
-  filter: drop-shadow(0 4px 10px rgba(91, 47, 20, 0.18));
+  color: rgba(91, 47, 20, 0.84);
+  text-shadow: 0 6px 14px rgba(255, 255, 255, 0.36);
 }
 
-.bingo-tile-name {
-  display: block;
-  max-width: 100%;
-  padding: 0.18rem 0.3rem;
-  font-size: 0.68rem;
-  font-weight: 800;
-  line-height: 1.15;
-  text-align: center;
-  border-radius: 999px;
-  background: rgba(255, 248, 236, 0.8);
-  box-shadow: 0 3px 10px rgba(91, 47, 20, 0.08);
+.bingo-tile-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.bingo-tile.is-seen .bingo-tile-name {
-  color: #7a4e0f;
-  background: rgba(255, 240, 191, 0.92);
-  text-shadow:
-    0 0 10px rgba(255, 214, 102, 0.12),
-    0 1px 3px rgba(255, 255, 255, 0.3);
-}
-
-.bingo-tile.is-seen .bingo-tile-icon {
-  filter:
-    drop-shadow(0 0 10px rgba(255, 210, 96, 0.35))
-    drop-shadow(0 4px 10px rgba(91, 47, 20, 0.18));
+.bingo-tile.is-seen .bingo-tile-number {
+  display: none;
 }
 
 .settings-backdrop {
@@ -302,6 +289,11 @@ button:disabled {
   gap: 0.85rem;
 }
 
+.settings-row-stack {
+  align-items: stretch;
+  flex-direction: column;
+}
+
 .settings-row {
   display: flex;
   align-items: center;
@@ -327,6 +319,24 @@ button:disabled {
 .settings-actions {
   display: grid;
   gap: 0.75rem;
+}
+
+.segmented-control {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.segment-button {
+  color: var(--earth-dark);
+  border: 1px solid rgba(91, 47, 20, 0.12);
+  background: rgba(255, 250, 242, 0.82);
+}
+
+.segment-button.is-active {
+  color: #fff7ed;
+  background: linear-gradient(135deg, var(--earth), var(--brush));
+  box-shadow: 0 12px 24px rgba(91, 47, 20, 0.16);
 }
 
 .settings-link {
@@ -413,6 +423,14 @@ button:disabled {
   padding: 0.9rem 0.9rem 1rem;
 }
 
+.animal-card.is-targeted {
+  outline: 3px solid rgba(232, 165, 44, 0.58);
+  box-shadow:
+    0 0 0 1px rgba(255, 227, 154, 0.8),
+    0 0 24px rgba(255, 204, 84, 0.48),
+    0 10px 24px rgba(78, 44, 18, 0.1);
+}
+
 .animal-title-row {
   display: flex;
   align-items: start;
@@ -420,8 +438,28 @@ button:disabled {
   gap: 0.75rem;
 }
 
+.animal-heading {
+  display: flex;
+  align-items: start;
+  gap: 0.7rem;
+}
+
 .animal-title-row h3 {
   font-size: 1.35rem;
+}
+
+.animal-number {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 0.55rem;
+  border-radius: 999px;
+  color: #fff7ed;
+  font-size: 0.92rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, var(--earth), var(--brush));
+  box-shadow: 0 8px 18px rgba(91, 47, 20, 0.16);
 }
 
 .animal-tag {
@@ -489,8 +527,21 @@ button:disabled {
   color: rgba(45, 33, 24, 0.68);
 }
 
-.photo-credit a {
-  color: inherit;
+.map-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--earth-dark);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.map-link.is-hidden {
+  display: none;
+}
+
+.map-link:hover {
+  text-decoration: underline;
 }
 
 .modal-backdrop {
@@ -662,12 +713,8 @@ button:disabled {
     gap: 0.75rem;
   }
 
-  .bingo-tile-name {
-    font-size: 0.86rem;
-  }
-
-  .bingo-tile-icon {
-    font-size: 2.7rem;
+  .bingo-tile-number {
+    font-size: 3.2rem;
   }
 
   .modal-layout {

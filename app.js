@@ -1,11 +1,12 @@
 const BIG_FIVE_IDS = ["lion", "leopard", "elephant", "buffalo", "rhino"];
-const GRID_SIZE = 4;
-const CARD_SIZE = GRID_SIZE * GRID_SIZE;
+const DEFAULT_GRID_SIZE = 4;
+const ALLOWED_GRID_SIZES = [4, 5];
 const STORAGE_KEY = "safari-bingo-state-v2";
 const MAX_HISTORY = 12;
 
 const animals = window.SAFARI_ANIMALS || [];
 const animalMap = new Map(animals.map((animal) => [animal.id, animal]));
+const animalNumberMap = new Map(animals.map((animal, index) => [animal.id, index + 1]));
 const restAnimals = animals.filter((animal) => !BIG_FIVE_IDS.includes(animal.id));
 
 const bingoBoard = document.getElementById("bingo-board");
@@ -14,6 +15,8 @@ const settingsPage = document.getElementById("settings-page");
 const openSettingsButton = document.getElementById("open-settings");
 const closeSettingsButton = document.getElementById("close-settings");
 const connectionPill = document.getElementById("connection-pill");
+const gridSize4Button = document.getElementById("grid-size-4");
+const gridSize5Button = document.getElementById("grid-size-5");
 const shareLocationToggle = document.getElementById("share-location-toggle");
 const openLocationSettingsButton = document.getElementById("open-location-settings");
 const locationSettingsCopy = document.getElementById("location-settings-copy");
@@ -31,6 +34,7 @@ const modalScientific = document.getElementById("modal-scientific");
 const modalDescription = document.getElementById("modal-description");
 const modalMeta = document.getElementById("modal-meta");
 const modalLastLocation = document.getElementById("modal-last-location");
+const modalLocationLink = document.getElementById("modal-location-link");
 const modalStatus = document.getElementById("modal-status");
 const sightingUpload = document.getElementById("sighting-upload");
 const uploadPreview = document.getElementById("upload-preview");
@@ -57,7 +61,12 @@ function createEmptySighting() {
 function createDefaultSettings() {
   return {
     shareLocationEnabled: true,
+    gridSize: DEFAULT_GRID_SIZE,
   };
+}
+
+function getCardSize(gridSize) {
+  return gridSize * gridSize;
 }
 
 function sanitizeNumber(value) {
@@ -170,6 +179,9 @@ function sanitizeSettings(raw) {
 
   return {
     shareLocationEnabled: raw.shareLocationEnabled !== false,
+    gridSize: ALLOWED_GRID_SIZES.includes(Number(raw.gridSize))
+      ? Number(raw.gridSize)
+      : DEFAULT_GRID_SIZE,
   };
 }
 
@@ -182,27 +194,29 @@ function shuffle(items) {
   return copy;
 }
 
-function createRandomCardIds() {
-  const selectedRest = shuffle(restAnimals).slice(0, CARD_SIZE - BIG_FIVE_IDS.length);
-  return shuffle([...BIG_FIVE_IDS, ...selectedRest.map((animal) => animal.id)]);
+function createRandomCardIds(gridSize = DEFAULT_GRID_SIZE) {
+  const cardSize = getCardSize(gridSize);
+  const selectedRest = shuffle(restAnimals).slice(0, Math.max(0, cardSize - BIG_FIVE_IDS.length));
+  return shuffle([...BIG_FIVE_IDS, ...selectedRest.map((animal) => animal.id)]).slice(0, cardSize);
 }
 
 function loadState() {
   try {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
     const sightingsSource = parsed?.sightings || parsed;
+    const settings = sanitizeSettings(parsed?.settings);
     const cardIds = Array.isArray(parsed?.cardIds) ? parsed.cardIds.filter((id) => animalMap.has(id)) : [];
 
     return {
       sightings: sanitizeSightings(sightingsSource),
-      cardIds: cardIds.length === CARD_SIZE ? cardIds : createRandomCardIds(),
-      settings: sanitizeSettings(parsed?.settings),
+      cardIds: cardIds.length === getCardSize(settings.gridSize) ? cardIds : createRandomCardIds(settings.gridSize),
+      settings,
     };
   } catch (error) {
     console.warn("Unable to restore saved progress.", error);
     return {
       sightings: sanitizeSightings({}),
-      cardIds: createRandomCardIds(),
+      cardIds: createRandomCardIds(DEFAULT_GRID_SIZE),
       settings: createDefaultSettings(),
     };
   }
@@ -248,20 +262,62 @@ function formatLocation(location) {
   return `${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)}${accuracy}`;
 }
 
+function toGoogleMapsUrl(location) {
+  return `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
+}
+
+function getAnimalNumber(id) {
+  return animalNumberMap.get(id) || 0;
+}
+
+function updateBoardLayout() {
+  bingoBoard.style.setProperty("--grid-size", String(state.settings.gridSize));
+}
+
+function updateShuffleLabel() {
+  shuffleButton.textContent = `Shuffle ${state.settings.gridSize}x${state.settings.gridSize} Card`;
+}
+
+function syncGridSizeUI() {
+  const gridSize = state.settings.gridSize;
+  gridSize4Button.classList.toggle("is-active", gridSize === 4);
+  gridSize5Button.classList.toggle("is-active", gridSize === 5);
+  updateBoardLayout();
+  updateShuffleLabel();
+}
+
+function setModalLocationState(message, location = null) {
+  modalLastLocation.textContent = message;
+
+  if (location) {
+    modalLocationLink.href = toGoogleMapsUrl(location);
+    modalLocationLink.classList.remove("is-hidden");
+    return;
+  }
+
+  modalLocationLink.classList.add("is-hidden");
+  modalLocationLink.removeAttribute("href");
+}
+
 function renderBingo() {
   bingoBoard.innerHTML = state.cardIds
     .map((id) => {
       const animal = animalMap.get(id);
       const seenClass = hasSeen(id) ? "is-seen" : "";
-      const label = animal.bingoName || animal.name;
-      const icon = animal.icon || "✦";
+      const animalNumber = getAnimalNumber(id);
+      const tileMarkup = hasSeen(id)
+        ? `<img class="bingo-tile-photo" src="${animal.image}" alt="${animal.name}" loading="lazy" />`
+        : `<span class="bingo-tile-number" aria-hidden="true">${animalNumber}</span>`;
 
       return `
-        <button class="bingo-tile ${seenClass}" type="button" data-action="open-modal" data-id="${id}">
-          <span class="bingo-tile-content">
-            <span class="bingo-tile-icon" aria-hidden="true">${icon}</span>
-            <span class="bingo-tile-name">${label}</span>
-          </span>
+        <button
+          class="bingo-tile ${seenClass}"
+          type="button"
+          data-action="scroll-to-animal"
+          data-id="${id}"
+          aria-label="Go to animal ${animalNumber}: ${animal.name}"
+        >
+          <span class="bingo-tile-content">${tileMarkup}</span>
         </button>
       `;
     })
@@ -276,7 +332,13 @@ function renderAnimalList() {
         ? `<p class="animal-note">Last local sighting: ${formatDate(entry.lastSeenAt)}</p>`
         : `<p class="animal-note">No local sighting saved yet.</p>`;
       const locationLine = entry.latestLocation
-        ? `<p class="animal-note">Location: ${formatLocation(entry.latestLocation)}</p>`
+        ? `
+          <p class="animal-note">
+            <a class="map-link" href="${toGoogleMapsUrl(entry.latestLocation)}" target="_blank" rel="noreferrer">
+              📍 Open last sighting on Google Maps
+            </a>
+          </p>
+        `
         : "";
       const latestImage = entry.latestImage
         ? `
@@ -291,13 +353,23 @@ function renderAnimalList() {
         : "";
 
       return `
-        <article class="animal-card" role="button" tabindex="0" data-action="open-modal" data-id="${animal.id}">
+        <article
+          class="animal-card"
+          id="animal-card-${animal.id}"
+          role="button"
+          tabindex="0"
+          data-action="open-modal"
+          data-id="${animal.id}"
+        >
           <img class="animal-photo" src="${animal.image}" alt="${animal.name}" loading="lazy" />
           <div class="animal-copy">
             <div class="animal-title-row">
-              <div>
-                <h3>${animal.name}</h3>
-                <div class="photo-credit"><em>${animal.scientificName}</em></div>
+              <div class="animal-heading">
+                <span class="animal-number">${getAnimalNumber(animal.id)}</span>
+                <div>
+                  <h3>${animal.name}</h3>
+                  <div class="photo-credit"><em>${animal.scientificName}</em></div>
+                </div>
               </div>
               <span class="animal-tag">${animal.type}</span>
             </div>
@@ -312,9 +384,6 @@ function renderAnimalList() {
             ${lastSeenLine}
             ${locationLine}
             ${latestImage}
-            <p class="photo-credit">
-              <a href="${animal.source}" target="_blank" rel="noreferrer">Photo source</a>
-            </p>
           </div>
         </article>
       `;
@@ -323,6 +392,7 @@ function renderAnimalList() {
 }
 
 function render() {
+  syncGridSizeUI();
   renderBingo();
   renderAnimalList();
 }
@@ -346,7 +416,7 @@ function setModalStatus(message, isError = false) {
 async function hydrateModalLocation() {
   if (!state.settings.shareLocationEnabled) {
     pendingLocation = null;
-    modalLastLocation.textContent = "Location sharing is off in Settings.";
+    setModalLocationState("Location sharing is off in Settings.");
     setModalStatus("Turn on Share location in Settings to confirm a sighting.", true);
     return;
   }
@@ -359,14 +429,19 @@ async function hydrateModalLocation() {
       return;
     }
     pendingLocation = location;
-    modalLastLocation.textContent = formatLocation(pendingLocation);
+    setModalLocationState(
+      pendingLocation.accuracy
+        ? `Accuracy ± ${Math.round(pendingLocation.accuracy)}m.`
+        : "Tap the pin to open the exact sighting location.",
+      pendingLocation,
+    );
     setModalStatus("Location ready. You can confirm the sighting now.");
   } catch (error) {
     if (activeAnimalId !== requestId) {
       return;
     }
     pendingLocation = null;
-    modalLastLocation.textContent = error.message;
+    setModalLocationState(error.message);
     setModalStatus(error.message, true);
   }
 }
@@ -420,7 +495,7 @@ function openSightingModal(id) {
     setPreviewImage("", "");
   }
 
-  modalLastLocation.textContent = "Waiting for geolocation permission.";
+  setModalLocationState("Waiting for geolocation permission.");
   setModalStatus(
     state.settings.shareLocationEnabled
       ? "Requesting device location..."
@@ -446,7 +521,7 @@ function closeSightingModal() {
 }
 
 function refreshCard() {
-  state.cardIds = createRandomCardIds();
+  state.cardIds = createRandomCardIds(state.settings.gridSize);
   saveState();
   render();
 }
@@ -468,6 +543,18 @@ function resetSightings() {
 function updateConnectionStatus() {
   connectionPill.textContent = navigator.onLine ? "Online now" : "Offline mode";
   connectionPill.classList.toggle("is-offline", !navigator.onLine);
+}
+
+function setGridSize(gridSize) {
+  if (!ALLOWED_GRID_SIZES.includes(gridSize) || gridSize === state.settings.gridSize) {
+    syncGridSizeUI();
+    return;
+  }
+
+  state.settings.gridSize = gridSize;
+  state.cardIds = createRandomCardIds(gridSize);
+  saveState();
+  render();
 }
 
 function registerServiceWorker() {
@@ -631,7 +718,12 @@ async function confirmSighting() {
     if (!pendingLocation) {
       setModalStatus("Trying device location again...");
       pendingLocation = await requestGeolocation();
-      modalLastLocation.textContent = formatLocation(pendingLocation);
+      setModalLocationState(
+        pendingLocation.accuracy
+          ? `Accuracy ± ${Math.round(pendingLocation.accuracy)}m.`
+          : "Tap the pin to open the exact sighting location.",
+        pendingLocation,
+      );
     }
 
     let latestImage = null;
@@ -689,6 +781,9 @@ function handleGlobalClick(event) {
     if (action === "open-modal") {
       openSightingModal(id);
     }
+    if (action === "scroll-to-animal") {
+      scrollToAnimal(id);
+    }
     return;
   }
 
@@ -731,6 +826,26 @@ function handleUploadChange() {
   setPreviewImage(draftPreviewUrl, `Selected file: ${file.name}`);
 }
 
+function scrollToAnimal(id) {
+  const card = document.getElementById(`animal-card-${id}`);
+  if (!card) {
+    return;
+  }
+
+  const previous = document.querySelector(".animal-card.is-targeted");
+  if (previous && previous !== card) {
+    previous.classList.remove("is-targeted");
+  }
+
+  card.classList.add("is-targeted");
+  card.scrollIntoView({ behavior: "smooth", block: "center" });
+  card.focus({ preventScroll: true });
+
+  window.setTimeout(() => {
+    card.classList.remove("is-targeted");
+  }, 1400);
+}
+
 async function handleLocationToggleChange() {
   if (!shareLocationToggle.checked) {
     state.settings.shareLocationEnabled = false;
@@ -764,6 +879,11 @@ async function handleLocationToggleChange() {
   syncLocationSettingsUI();
 }
 
+function handleGridSizeChange(event) {
+  const button = event.currentTarget;
+  setGridSize(Number(button.dataset.gridSize));
+}
+
 document.addEventListener("click", handleGlobalClick);
 animalGrid.addEventListener("keydown", handleAnimalGridKeydown);
 document.addEventListener("keydown", (event) => {
@@ -782,6 +902,8 @@ document.addEventListener("keydown", (event) => {
 
 openSettingsButton.addEventListener("click", openSettingsPage);
 closeSettingsButton.addEventListener("click", closeSettingsPage);
+gridSize4Button.addEventListener("click", handleGridSizeChange);
+gridSize5Button.addEventListener("click", handleGridSizeChange);
 shuffleButton.addEventListener("click", refreshCard);
 resetButton.addEventListener("click", resetSightings);
 closeModalButton.addEventListener("click", closeSightingModal);

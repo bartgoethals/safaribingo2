@@ -10,13 +10,13 @@
     <meta name="theme-color" content="#8a4b1f" />
     <link rel="manifest" href="/manifest.webmanifest?v=20260406b" />
     <link rel="icon" href="/public/icons/icon.svg" type="image/svg+xml" />
-    <title>Safari Bingo</title>
+    <title>Shikamoo Adventures Safari Bingo</title>
     <link rel="stylesheet" href="/styles.css?v=20260406b" />
   </head>
   <body>
     <div class="page-shell">
       <header class="topbar">
-        <h1>Safari Bingo</h1>
+        <h1>Shikamoo Adventures Safari Bingo</h1>
         <button class="icon-button" id="open-settings" type="button" aria-label="Open settings">
           <span aria-hidden="true">⚙</span>
         </button>
@@ -51,6 +51,21 @@
         </div>
 
         <div class="settings-stack">
+          <div class="settings-row settings-row-stack">
+            <div>
+              <strong>Bingo card size</strong>
+              <p class="settings-copy">Choose between a 4x4 or 5x5 safari card.</p>
+            </div>
+            <div class="segmented-control" id="grid-size-controls" aria-label="Bingo card size">
+              <button class="segment-button" id="grid-size-4" type="button" data-grid-size="4">
+                4x4
+              </button>
+              <button class="segment-button" id="grid-size-5" type="button" data-grid-size="5">
+                5x5
+              </button>
+            </div>
+          </div>
+
           <div class="settings-row">
             <div>
               <strong>Online now</strong>
@@ -78,7 +93,7 @@
 
           <div class="settings-actions">
             <button class="primary-button" id="shuffle-card" type="button">
-              Shuffle 4x4 Card
+              Shuffle Card
             </button>
             <button class="ghost-button" id="reset-progress" type="button">
               Reset Sightings
@@ -106,7 +121,16 @@
             <div class="modal-meta" id="modal-meta"></div>
 
             <div class="modal-location-card">
-              <strong>Device location</strong>
+              <strong>Location pin</strong>
+              <a
+                class="map-link is-hidden"
+                id="modal-location-link"
+                href="#"
+                target="_blank"
+                rel="noreferrer"
+              >
+                📍 Open in Google Maps
+              </a>
               <p id="modal-last-location">
                 Waiting for geolocation permission.
               </p>
