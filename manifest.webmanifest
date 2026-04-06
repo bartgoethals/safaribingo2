@@ -1,0 +1,22 @@
+{
+  "name": "Safari Bingo Tanzania",
+  "short_name": "Safari Bingo",
+  "description": "Track Tanzanian safari sightings and play an offline-ready bingo game.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5ead6",
+  "theme_color": "#8a4b1f",
+  "icons": [
+    {
+      "src": "/public/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/public/icons/mask-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

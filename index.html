@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Track Tanzania safari sightings, build bingo lines, and keep playing even after you go offline."
+    />
+    <meta name="theme-color" content="#8a4b1f" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/public/icons/icon.svg" type="image/svg+xml" />
+    <title>Safari Bingo Tanzania</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Offline-ready Safari Challenge</p>
+          <h1>Safari Bingo Tanzania</h1>
+          <p class="hero-text">
+            Mark every animal you spot, collect bingo lines, and keep the game
+            running even when your connection disappears on the road.
+          </p>
+          <div class="hero-actions">
+            <button class="primary-button" id="shuffle-card" type="button">
+              New Bingo Card
+            </button>
+            <button class="ghost-button" id="reset-progress" type="button">
+              Reset Sightings
+            </button>
+          </div>
+        </div>
+        <aside class="hero-panel">
+          <div class="status-row">
+            <span class="status-pill" id="connection-pill">Checking signal</span>
+            <span class="status-pill secondary" id="cache-pill">
+              Preparing offline cache
+            </span>
+          </div>
+          <div class="stats-grid" id="stats-grid"></div>
+        </aside>
+      </header>
+
+      <main>
+        <section class="section">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Wildlife Roster</p>
+              <h2>Popular animals to spot in Tanzania</h2>
+            </div>
+            <p class="section-note">
+              Tap <strong>Witnessed</strong> whenever you see one. The counter
+              updates both the roster and the bingo card.
+            </p>
+          </div>
+          <div class="animal-grid" id="animal-grid"></div>
+        </section>
+
+        <section class="section bingo-section">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Game Board</p>
+              <h2>Your safari bingo card</h2>
+            </div>
+            <p class="section-note">
+              Every card includes the Big Five plus a random mix of other
+              favourites.
+            </p>
+          </div>
+          <div class="bingo-layout">
+            <div class="bingo-board" id="bingo-board"></div>
+            <aside class="bingo-sidebar">
+              <div class="bingo-card-summary" id="bingo-summary"></div>
+              <div class="bingo-legend">
+                <div class="legend-item">
+                  <span class="legend-swatch seen"></span>
+                  Seen at least once
+                </div>
+                <div class="legend-item">
+                  <span class="legend-swatch big-five"></span>
+                  Big Five animal
+                </div>
+                <div class="legend-item">
+                  <span class="legend-swatch pending"></span>
+                  Still waiting
+                </div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="section offline-section">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Offline Mode</p>
+              <h2>Built for patchy safari signal</h2>
+            </div>
+          </div>
+          <div class="offline-card">
+            <p>
+              After the first successful load, this app caches the page,
+              scripts, styles, manifest, icons, and animal photos on your
+              device. Your sightings and bingo card are saved in local storage,
+              so the game still opens and remembers progress without an internet
+              connection.
+            </p>
+            <p class="offline-footnote">
+              Photos are sourced from Wikimedia Commons. Each animal card links
+              to its source page for creator and license details.
+            </p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <noscript>
+      <div class="noscript-banner">
+        Safari Bingo needs JavaScript enabled so counters and bingo progress can
+        update.
+      </div>
+    </noscript>
+
+    <script src="/data.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>

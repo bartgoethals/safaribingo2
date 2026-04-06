@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">Safari Bingo Tanzania icon</title>
+  <desc id="desc">A warm sunset with an acacia silhouette and bingo squares.</desc>
+  <defs>
+    <linearGradient id="sky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f9dba2" />
+      <stop offset="100%" stop-color="#c8752c" />
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="48" fill="#f4e2c0" />
+  <rect x="18" y="18" width="220" height="220" rx="38" fill="url(#sky)" />
+  <circle cx="128" cy="92" r="50" fill="#ffe7a8" />
+  <path d="M36 176h184v36H36z" fill="#6b4320" />
+  <path
+    d="M120 106c8 4 12 12 13 21l4 49h-10l-3-45c-1-7-4-12-10-15l6-10zm7 3c14 1 31 8 44 17 8 5 17 7 28 6l1 8c-13 2-25-1-35-8-12-8-26-13-41-15l3-8zm-4-2c-13 0-24 6-36 17-8 7-17 12-31 11l1 8c16 1 28-4 38-13 10-9 19-14 30-15l-2-8z"
+    fill="#3f2815"
+  />
+  <g fill="#f9f1e0">
+    <rect x="50" y="142" width="34" height="34" rx="8" />
+    <rect x="93" y="142" width="34" height="34" rx="8" />
+    <rect x="136" y="142" width="34" height="34" rx="8" />
+    <rect x="179" y="142" width="27" height="34" rx="8" />
+  </g>
+  <g fill="#3f2815">
+    <rect x="58" y="150" width="18" height="18" rx="4" />
+    <rect x="144" y="150" width="18" height="18" rx="4" />
+    <path d="M104 152l13 13-5 5-8-8-5 5-5-5z" />
+  </g>
+</svg>
