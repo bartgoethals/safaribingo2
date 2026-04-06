@@ -1,4 +1,4 @@
-const CACHE_NAME = "safari-bingo-cache-v1";
+const CACHE_NAME = "safari-bingo-cache-v2";
 const ASSETS = [
   "/",
   "/index.html",
@@ -12,17 +12,23 @@ const ASSETS = [
   "/public/images/buffalo.jpg",
   "/public/images/cheetah.jpg",
   "/public/images/crocodile.jpg",
+  "/public/images/dik-dik.jpg",
+  "/public/images/eland.jpg",
   "/public/images/elephant.jpg",
+  "/public/images/fish-eagle.jpg",
   "/public/images/gazelle.jpg",
   "/public/images/giraffe.jpg",
+  "/public/images/hartebeest.jpg",
   "/public/images/hippo.jpg",
   "/public/images/hyena.jpg",
+  "/public/images/impala.jpg",
   "/public/images/leopard.jpg",
   "/public/images/lion.jpg",
   "/public/images/ostrich.jpg",
   "/public/images/rhino.jpg",
   "/public/images/secretary-bird.jpg",
   "/public/images/serval.jpg",
+  "/public/images/vervet-monkey.jpg",
   "/public/images/warthog.jpg",
   "/public/images/wild-dog.jpg",
   "/public/images/wildebeest.jpg",
@@ -55,9 +61,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   if (event.request.mode === "navigate") {
-    event.respondWith(
-      fetch(event.request).catch(() => caches.match("/index.html")),
-    );
+    event.respondWith(fetch(event.request).catch(() => caches.match("/index.html")));
     return;
   }
 

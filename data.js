@@ -215,4 +215,72 @@ window.SAFARI_ANIMALS = [
     image: "/public/images/secretary-bird.jpg",
     source: "https://commons.wikimedia.org/wiki/File:Secretary_bird.jpg",
   },
+  {
+    id: "impala",
+    name: "Impala",
+    scientificName: "Aepyceros melampus",
+    type: "Graceful antelope",
+    region: "Woodland edges and mixed bush",
+    description:
+      "Impalas can leap long distances and often form alert herds that react quickly when predators appear.",
+    image: "/public/images/impala.jpg",
+    source: "https://commons.wikimedia.org/wiki/File:Impala.jpg",
+  },
+  {
+    id: "vervet-monkey",
+    name: "Vervet Monkey",
+    scientificName: "Chlorocebus pygerythrus",
+    type: "Alert primate",
+    region: "Acacia groves and camp areas",
+    description:
+      "Vervet monkeys use distinct alarm calls for different predators and are quick to investigate human camps.",
+    image: "/public/images/vervet-monkey.jpg",
+    source:
+      "https://commons.wikimedia.org/wiki/File:Vervet_monkey_(27536087342).jpg",
+  },
+  {
+    id: "dik-dik",
+    name: "Kirk's Dik-dik",
+    scientificName: "Madoqua kirkii",
+    type: "Tiny browser",
+    region: "Dense scrub and thorn bush",
+    description:
+      "Dik-diks are tiny antelope that freeze in cover and move in pairs through thick, dry vegetation.",
+    image: "/public/images/dik-dik.jpg",
+    source:
+      "https://commons.wikimedia.org/wiki/File:Kirk%27s_Dik-Dik_(27638655543).jpg",
+  },
+  {
+    id: "fish-eagle",
+    name: "African Fish Eagle",
+    scientificName: "Icthyophaga vocifer",
+    type: "Waterside raptor",
+    region: "Lakeshores and river systems",
+    description:
+      "This powerful eagle is often heard before it is seen, calling from riverside trees before diving for fish.",
+    image: "/public/images/fish-eagle.jpg",
+    source: "https://commons.wikimedia.org/wiki/File:African_Fish_Eagle.jpg",
+  },
+  {
+    id: "eland",
+    name: "Common Eland",
+    scientificName: "Taurotragus oryx",
+    type: "Largest antelope",
+    region: "Open woodland and plains",
+    description:
+      "Elands are massive but surprisingly nimble antelope that can clear high obstacles with light, springy jumps.",
+    image: "/public/images/eland.jpg",
+    source: "https://commons.wikimedia.org/wiki/File:Common_Eland_(23).jpg",
+  },
+  {
+    id: "hartebeest",
+    name: "Coke's Hartebeest",
+    scientificName: "Alcelaphus buselaphus cokii",
+    type: "Plain sentinel",
+    region: "Open plains and short grass country",
+    description:
+      "Hartebeest often stand tall on the horizon, using keen eyesight and speed to detect and avoid danger.",
+    image: "/public/images/hartebeest.jpg",
+    source: "https://commons.wikimedia.org/wiki/File:Coke%27s_Hartebeest.jpg",
+  },
 ];
