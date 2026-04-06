@@ -1,11 +1,11 @@
-const CACHE_NAME = "safari-bingo-cache-v2";
+const CACHE_NAME = "safari-bingo-cache-v3";
 const ASSETS = [
   "/",
   "/index.html",
-  "/styles.css",
-  "/data.js",
-  "/app.js",
-  "/manifest.webmanifest",
+  "/styles.css?v=20260406b",
+  "/data.js?v=20260406b",
+  "/app.js?v=20260406b",
+  "/manifest.webmanifest?v=20260406b",
   "/public/icons/icon.svg",
   "/public/icons/mask-icon.svg",
   "/public/images/baboon.jpg",
@@ -62,6 +62,24 @@ self.addEventListener("fetch", (event) => {
 
   if (event.request.mode === "navigate") {
     event.respondWith(fetch(event.request).catch(() => caches.match("/index.html")));
+    return;
+  }
+
+  if (
+    requestUrl.pathname === "/styles.css" ||
+    requestUrl.pathname === "/data.js" ||
+    requestUrl.pathname === "/app.js" ||
+    requestUrl.pathname === "/manifest.webmanifest"
+  ) {
+    event.respondWith(
+      fetch(event.request)
+        .then((networkResponse) => {
+          const responseClone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request)),
+    );
     return;
   }
 
