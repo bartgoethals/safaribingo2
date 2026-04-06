@@ -229,12 +229,14 @@ function renderBingo() {
     .map((id) => {
       const animal = animalMap.get(id);
       const seenClass = hasSeen(id) ? "is-seen" : "";
+      const label = animal.bingoName || animal.name;
+      const icon = animal.icon || "✦";
 
       return `
         <button class="bingo-tile ${seenClass}" type="button" data-action="open-modal" data-id="${id}">
-          <img class="bingo-tile-image" src="${animal.image}" alt="${animal.name}" loading="lazy" />
           <span class="bingo-tile-content">
-            <span class="bingo-tile-name">${animal.name}</span>
+            <span class="bingo-tile-icon" aria-hidden="true">${icon}</span>
+            <span class="bingo-tile-name">${label}</span>
           </span>
         </button>
       `;

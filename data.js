@@ -2,6 +2,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "lion",
     name: "Lion",
+    bingoName: "Lion",
+    icon: "🦁",
     scientificName: "Panthera leo",
     type: "Big Five",
     region: "Serengeti and Ruaha",
@@ -13,6 +15,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "leopard",
     name: "Leopard",
+    bingoName: "Leopard",
+    icon: "🐆",
     scientificName: "Panthera pardus",
     type: "Big Five",
     region: "Serengeti kopjes and riverine trees",
@@ -24,6 +28,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "elephant",
     name: "African Elephant",
+    bingoName: "Elephant",
+    icon: "🐘",
     scientificName: "Loxodonta africana",
     type: "Big Five",
     region: "Tarangire and Serengeti plains",
@@ -36,6 +42,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "buffalo",
     name: "African Buffalo",
+    bingoName: "Buffalo",
+    icon: "🐃",
     scientificName: "Syncerus caffer",
     type: "Big Five",
     region: "Wet grasslands and woodland edges",
@@ -47,6 +55,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "rhino",
     name: "Black Rhinoceros",
+    bingoName: "Rhino",
+    icon: "🦏",
     scientificName: "Diceros bicornis",
     type: "Big Five",
     region: "Ngorongoro Conservation Area",
@@ -59,6 +69,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "cheetah",
     name: "Cheetah",
+    bingoName: "Cheetah",
+    icon: "🐆",
     scientificName: "Acinonyx jubatus",
     type: "Fast hunter",
     region: "Open grasslands",
@@ -70,6 +82,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "giraffe",
     name: "Masai Giraffe",
+    bingoName: "Giraffe",
+    icon: "🦒",
     scientificName: "Giraffa tippelskirchi",
     type: "Towering browser",
     region: "Northern parks and acacia country",
@@ -82,6 +96,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "zebra",
     name: "Plains Zebra",
+    bingoName: "Zebra",
+    icon: "🦓",
     scientificName: "Equus quagga",
     type: "Grazer",
     region: "Migration routes and short grass plains",
@@ -93,6 +109,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "hippo",
     name: "Hippopotamus",
+    bingoName: "Hippo",
+    icon: "🦛",
     scientificName: "Hippopotamus amphibius",
     type: "River giant",
     region: "Rivers, pools, and floodplains",
@@ -104,6 +122,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "wildebeest",
     name: "Blue Wildebeest",
+    bingoName: "Wildebeest",
+    icon: "🐂",
     scientificName: "Connochaetes taurinus",
     type: "Migration icon",
     region: "Serengeti migration corridor",
@@ -115,6 +135,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "hyena",
     name: "Spotted Hyena",
+    bingoName: "Hyena",
+    icon: "🐾",
     scientificName: "Crocuta crocuta",
     type: "Scavenger and hunter",
     region: "Across most savanna habitats",
@@ -127,6 +149,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "warthog",
     name: "Warthog",
+    bingoName: "Warthog",
+    icon: "🐗",
     scientificName: "Phacochoerus africanus",
     type: "Savanna comic relief",
     region: "Short grass and open scrub",
@@ -138,6 +162,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "gazelle",
     name: "Thomson's Gazelle",
+    bingoName: "Gazelle",
+    icon: "🦌",
     scientificName: "Eudorcas thomsonii",
     type: "Plains sprinter",
     region: "Short grass plains",
@@ -150,6 +176,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "crocodile",
     name: "Nile Crocodile",
+    bingoName: "Crocodile",
+    icon: "🐊",
     scientificName: "Crocodylus niloticus",
     type: "River ambush predator",
     region: "Mara, Grumeti, and major rivers",
@@ -161,6 +189,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "ostrich",
     name: "Common Ostrich",
+    bingoName: "Ostrich",
+    icon: "🐦",
     scientificName: "Struthio camelus",
     type: "Largest bird",
     region: "Open country and dry plains",
@@ -172,6 +202,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "baboon",
     name: "Olive Baboon",
+    bingoName: "Baboon",
+    icon: "🐒",
     scientificName: "Papio anubis",
     type: "Troop traveller",
     region: "Woodland edges and camps",
@@ -184,6 +216,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "serval",
     name: "Serval",
+    bingoName: "Serval",
+    icon: "🐈",
     scientificName: "Leptailurus serval",
     type: "Secretive cat",
     region: "Tall grass and marshy flats",
@@ -195,6 +229,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "wild-dog",
     name: "African Wild Dog",
+    bingoName: "Wild Dog",
+    icon: "🐕",
     scientificName: "Lycaon pictus",
     type: "Pack hunter",
     region: "Rare but thrilling sighting",
@@ -207,6 +243,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "secretary-bird",
     name: "Secretary Bird",
+    bingoName: "Bird",
+    icon: "🦅",
     scientificName: "Sagittarius serpentarius",
     type: "Iconic raptor",
     region: "Open savanna",
@@ -218,6 +256,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "impala",
     name: "Impala",
+    bingoName: "Impala",
+    icon: "🦌",
     scientificName: "Aepyceros melampus",
     type: "Graceful antelope",
     region: "Woodland edges and mixed bush",
@@ -229,6 +269,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "vervet-monkey",
     name: "Vervet Monkey",
+    bingoName: "Monkey",
+    icon: "🐒",
     scientificName: "Chlorocebus pygerythrus",
     type: "Alert primate",
     region: "Acacia groves and camp areas",
@@ -241,6 +283,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "dik-dik",
     name: "Kirk's Dik-dik",
+    bingoName: "Dik-dik",
+    icon: "🦌",
     scientificName: "Madoqua kirkii",
     type: "Tiny browser",
     region: "Dense scrub and thorn bush",
@@ -253,6 +297,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "fish-eagle",
     name: "African Fish Eagle",
+    bingoName: "Eagle",
+    icon: "🦅",
     scientificName: "Icthyophaga vocifer",
     type: "Waterside raptor",
     region: "Lakeshores and river systems",
@@ -264,6 +310,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "eland",
     name: "Common Eland",
+    bingoName: "Eland",
+    icon: "🦬",
     scientificName: "Taurotragus oryx",
     type: "Largest antelope",
     region: "Open woodland and plains",
@@ -275,6 +323,8 @@ window.SAFARI_ANIMALS = [
   {
     id: "hartebeest",
     name: "Coke's Hartebeest",
+    bingoName: "Hartebeest",
+    icon: "🦌",
     scientificName: "Alcelaphus buselaphus cokii",
     type: "Plain sentinel",
     region: "Open plains and short grass country",

@@ -209,14 +209,16 @@ button:disabled {
   border: 2px solid rgba(91, 47, 20, 0.1);
   border-radius: 16px;
   text-align: left;
-  background: rgba(255, 252, 246, 0.75);
+  background:
+    radial-gradient(circle at top, rgba(255, 250, 239, 0.95), rgba(238, 216, 176, 0.92)),
+    rgba(255, 252, 246, 0.75);
   box-shadow: 0 6px 14px rgba(78, 44, 18, 0.1);
 }
 
 .bingo-tile::after {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(38, 24, 11, 0.04), rgba(38, 24, 11, 0.76));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(88, 52, 18, 0.1));
   content: "";
 }
 
@@ -229,14 +231,7 @@ button:disabled {
 }
 
 .bingo-tile.is-seen::after {
-  background: linear-gradient(180deg, rgba(255, 215, 120, 0.1), rgba(160, 103, 17, 0.58));
-}
-
-.bingo-tile-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+  background: linear-gradient(180deg, rgba(255, 222, 128, 0.12), rgba(160, 103, 17, 0.14));
 }
 
 .bingo-tile-content {
@@ -244,30 +239,45 @@ button:disabled {
   inset: 0;
   z-index: 1;
   display: flex;
-  align-items: end;
-  justify-content: space-between;
-  padding: 0.45rem;
-  color: #fff9f1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.35rem;
+  color: var(--earth-dark);
+}
+
+.bingo-tile-icon {
+  font-size: clamp(1.8rem, 7vw, 2.8rem);
+  line-height: 1;
+  filter: drop-shadow(0 4px 10px rgba(91, 47, 20, 0.18));
 }
 
 .bingo-tile-name {
   display: block;
-  width: 100%;
-  padding: 0.25rem 0.35rem;
-  font-size: 0.72rem;
+  max-width: 100%;
+  padding: 0.18rem 0.3rem;
+  font-size: 0.68rem;
   font-weight: 800;
   line-height: 1.15;
-  border-radius: 10px;
-  background: rgba(20, 14, 10, 0.45);
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  text-align: center;
+  border-radius: 999px;
+  background: rgba(255, 248, 236, 0.8);
+  box-shadow: 0 3px 10px rgba(91, 47, 20, 0.08);
 }
 
 .bingo-tile.is-seen .bingo-tile-name {
-  color: #fff3c4;
-  background: rgba(110, 67, 12, 0.55);
+  color: #7a4e0f;
+  background: rgba(255, 240, 191, 0.92);
   text-shadow:
-    0 0 10px rgba(255, 214, 102, 0.35),
-    0 2px 10px rgba(0, 0, 0, 0.3);
+    0 0 10px rgba(255, 214, 102, 0.12),
+    0 1px 3px rgba(255, 255, 255, 0.3);
+}
+
+.bingo-tile.is-seen .bingo-tile-icon {
+  filter:
+    drop-shadow(0 0 10px rgba(255, 210, 96, 0.35))
+    drop-shadow(0 4px 10px rgba(91, 47, 20, 0.18));
 }
 
 .animal-grid {
@@ -560,7 +570,11 @@ button:disabled {
   }
 
   .bingo-tile-name {
-    font-size: 0.9rem;
+    font-size: 0.86rem;
+  }
+
+  .bingo-tile-icon {
+    font-size: 2.7rem;
   }
 
   .modal-layout {
