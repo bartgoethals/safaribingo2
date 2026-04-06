@@ -10,8 +10,13 @@ const restAnimals = animals.filter((animal) => !BIG_FIVE_IDS.includes(animal.id)
 
 const bingoBoard = document.getElementById("bingo-board");
 const animalGrid = document.getElementById("animal-grid");
+const settingsPage = document.getElementById("settings-page");
+const openSettingsButton = document.getElementById("open-settings");
+const closeSettingsButton = document.getElementById("close-settings");
 const connectionPill = document.getElementById("connection-pill");
-const cachePill = document.getElementById("cache-pill");
+const shareLocationToggle = document.getElementById("share-location-toggle");
+const openLocationSettingsButton = document.getElementById("open-location-settings");
+const locationSettingsCopy = document.getElementById("location-settings-copy");
 const shuffleButton = document.getElementById("shuffle-card");
 const resetButton = document.getElementById("reset-progress");
 
@@ -35,6 +40,7 @@ const uploadPreviewLabel = document.getElementById("upload-preview-label");
 let activeAnimalId = null;
 let draftPreviewUrl = null;
 let pendingLocation = null;
+let locationPermissionState = "unknown";
 
 let state = loadState();
 
@@ -45,6 +51,12 @@ function createEmptySighting() {
     latestLocation: null,
     latestImage: null,
     history: [],
+  };
+}
+
+function createDefaultSettings() {
+  return {
+    shareLocationEnabled: true,
   };
 }
 
@@ -151,6 +163,16 @@ function sanitizeSightings(raw) {
   return sightings;
 }
 
+function sanitizeSettings(raw) {
+  if (!raw || typeof raw !== "object") {
+    return createDefaultSettings();
+  }
+
+  return {
+    shareLocationEnabled: raw.shareLocationEnabled !== false,
+  };
+}
+
 function shuffle(items) {
   const copy = [...items];
   for (let index = copy.length - 1; index > 0; index -= 1) {
@@ -174,12 +196,14 @@ function loadState() {
     return {
       sightings: sanitizeSightings(sightingsSource),
       cardIds: cardIds.length === CARD_SIZE ? cardIds : createRandomCardIds(),
+      settings: sanitizeSettings(parsed?.settings),
     };
   } catch (error) {
     console.warn("Unable to restore saved progress.", error);
     return {
       sightings: sanitizeSightings({}),
       cardIds: createRandomCardIds(),
+      settings: createDefaultSettings(),
     };
   }
 }
@@ -303,12 +327,30 @@ function render() {
   renderAnimalList();
 }
 
+function openSettingsPage() {
+  settingsPage.classList.remove("is-hidden");
+  settingsPage.setAttribute("aria-hidden", "false");
+  syncLocationSettingsUI();
+}
+
+function closeSettingsPage() {
+  settingsPage.classList.add("is-hidden");
+  settingsPage.setAttribute("aria-hidden", "true");
+}
+
 function setModalStatus(message, isError = false) {
   modalStatus.textContent = message;
   modalStatus.classList.toggle("is-error", isError);
 }
 
 async function hydrateModalLocation() {
+  if (!state.settings.shareLocationEnabled) {
+    pendingLocation = null;
+    modalLastLocation.textContent = "Location sharing is off in Settings.";
+    setModalStatus("Turn on Share location in Settings to confirm a sighting.", true);
+    return;
+  }
+
   const requestId = activeAnimalId;
   try {
     setModalStatus("Requesting device location...");
@@ -379,11 +421,18 @@ function openSightingModal(id) {
   }
 
   modalLastLocation.textContent = "Waiting for geolocation permission.";
-  setModalStatus("Requesting device location...");
+  setModalStatus(
+    state.settings.shareLocationEnabled
+      ? "Requesting device location..."
+      : "Turn on Share location in Settings to confirm a sighting.",
+    !state.settings.shareLocationEnabled,
+  );
 
   modal.classList.remove("is-hidden");
   modal.setAttribute("aria-hidden", "false");
-  hydrateModalLocation();
+  if (state.settings.shareLocationEnabled) {
+    hydrateModalLocation();
+  }
 }
 
 function closeSightingModal() {
@@ -418,24 +467,73 @@ function resetSightings() {
 
 function updateConnectionStatus() {
   connectionPill.textContent = navigator.onLine ? "Online now" : "Offline mode";
-  connectionPill.style.background = navigator.onLine ? "var(--leaf)" : "var(--earth)";
+  connectionPill.classList.toggle("is-offline", !navigator.onLine);
 }
 
 function registerServiceWorker() {
   if (!("serviceWorker" in navigator)) {
-    cachePill.textContent = "Offline cache unsupported";
     return;
   }
 
   window.addEventListener("load", async () => {
     try {
       await navigator.serviceWorker.register("/sw.js");
-      cachePill.textContent = "Offline cache ready";
     } catch (error) {
       console.error("Service worker registration failed.", error);
-      cachePill.textContent = "Offline cache failed";
     }
   });
+}
+
+async function getLocationPermissionState() {
+  if (!navigator.permissions || !navigator.permissions.query) {
+    return "unknown";
+  }
+
+  try {
+    const status = await navigator.permissions.query({ name: "geolocation" });
+    return status.state;
+  } catch (error) {
+    return "unknown";
+  }
+}
+
+async function syncLocationSettingsUI() {
+  locationPermissionState = await getLocationPermissionState();
+
+  const isEffectivelyOn =
+    state.settings.shareLocationEnabled && locationPermissionState !== "denied";
+
+  shareLocationToggle.checked = isEffectivelyOn;
+
+  if (locationPermissionState === "granted" && state.settings.shareLocationEnabled) {
+    locationSettingsCopy.textContent =
+      "Safari Bingo will collect your location while you confirm a sighting.";
+  } else if (locationPermissionState === "denied") {
+    locationSettingsCopy.textContent =
+      "Location access is blocked in your browser or device settings. Turn the switch on to reopen settings.";
+  } else if (!state.settings.shareLocationEnabled) {
+    locationSettingsCopy.textContent =
+      "Location sharing is off for this app. Turn it on when you want to log coordinates.";
+  } else {
+    locationSettingsCopy.textContent =
+      "Safari Bingo will ask for geolocation during a sighting confirmation.";
+  }
+
+  openLocationSettingsButton.classList.toggle(
+    "is-hidden",
+    locationPermissionState !== "denied" && state.settings.shareLocationEnabled,
+  );
+}
+
+function openLocationSettings() {
+  const userAgent = navigator.userAgent || "";
+
+  if (/iPhone|iPad|iPod/i.test(userAgent)) {
+    window.location.href = "app-settings:";
+    return;
+  }
+
+  window.alert("Open your browser or device location settings, then return to Safari Bingo.");
 }
 
 function requestGeolocation() {
@@ -526,6 +624,10 @@ async function confirmSighting() {
   closeModalButton.disabled = true;
 
   try {
+    if (!state.settings.shareLocationEnabled) {
+      throw new Error("Turn on Share location in Settings to confirm a sighting.");
+    }
+
     if (!pendingLocation) {
       setModalStatus("Trying device location again...");
       pendingLocation = await requestGeolocation();
@@ -593,6 +695,10 @@ function handleGlobalClick(event) {
   if (event.target === modal) {
     closeSightingModal();
   }
+
+  if (event.target === settingsPage) {
+    closeSettingsPage();
+  }
 }
 
 function handleAnimalGridKeydown(event) {
@@ -625,23 +731,69 @@ function handleUploadChange() {
   setPreviewImage(draftPreviewUrl, `Selected file: ${file.name}`);
 }
 
+async function handleLocationToggleChange() {
+  if (!shareLocationToggle.checked) {
+    state.settings.shareLocationEnabled = false;
+    pendingLocation = null;
+    saveState();
+    syncLocationSettingsUI();
+    return;
+  }
+
+  state.settings.shareLocationEnabled = true;
+  saveState();
+
+  const permissionState = await getLocationPermissionState();
+  if (permissionState === "denied") {
+    shareLocationToggle.checked = false;
+    openLocationSettings();
+    syncLocationSettingsUI();
+    return;
+  }
+
+  try {
+    await requestGeolocation();
+  } catch (error) {
+    const updatedPermissionState = await getLocationPermissionState();
+    if (updatedPermissionState === "denied") {
+      shareLocationToggle.checked = false;
+      openLocationSettings();
+    }
+  }
+
+  syncLocationSettingsUI();
+}
+
 document.addEventListener("click", handleGlobalClick);
 animalGrid.addEventListener("keydown", handleAnimalGridKeydown);
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !modal.classList.contains("is-hidden")) {
+  if (event.key !== "Escape") {
+    return;
+  }
+
+  if (!modal.classList.contains("is-hidden")) {
     closeSightingModal();
+  }
+
+  if (!settingsPage.classList.contains("is-hidden")) {
+    closeSettingsPage();
   }
 });
 
+openSettingsButton.addEventListener("click", openSettingsPage);
+closeSettingsButton.addEventListener("click", closeSettingsPage);
 shuffleButton.addEventListener("click", refreshCard);
 resetButton.addEventListener("click", resetSightings);
 closeModalButton.addEventListener("click", closeSightingModal);
 cancelModalButton.addEventListener("click", closeSightingModal);
 confirmModalButton.addEventListener("click", confirmSighting);
 sightingUpload.addEventListener("change", handleUploadChange);
+shareLocationToggle.addEventListener("change", handleLocationToggleChange);
+openLocationSettingsButton.addEventListener("click", openLocationSettings);
 window.addEventListener("online", updateConnectionStatus);
 window.addEventListener("offline", updateConnectionStatus);
 
 updateConnectionStatus();
 registerServiceWorker();
+syncLocationSettingsUI();
 render();

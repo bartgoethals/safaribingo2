@@ -5,50 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Track Tanzania safari sightings with a 4x4 image bingo card, geotagged confirmations, and offline-ready local storage."
+      content="Safari Bingo is a mobile-first Tanzania safari bingo app with offline-ready sighting logging."
     />
     <meta name="theme-color" content="#8a4b1f" />
     <link rel="manifest" href="/manifest.webmanifest?v=20260406b" />
     <link rel="icon" href="/public/icons/icon.svg" type="image/svg+xml" />
-    <title>Safari Bingo Tanzania</title>
+    <title>Safari Bingo</title>
     <link rel="stylesheet" href="/styles.css?v=20260406b" />
   </head>
   <body>
     <div class="page-shell">
-      <header class="hero">
-        <div class="hero-copy">
-          <p class="eyebrow">Mobile-first Safari Bingo</p>
-          <h1>Safari Bingo Tanzania</h1>
-          <p class="hero-text">
-            Tap a photo tile to log a sighting. The confirmation window asks for
-            your location and lets you upload an image from your device.
-          </p>
-          <div class="hero-actions">
-            <button class="primary-button" id="shuffle-card" type="button">
-              Shuffle 4x4 Card
-            </button>
-            <button class="ghost-button" id="reset-progress" type="button">
-              Reset Sightings
-            </button>
-          </div>
-          <div class="hero-status">
-            <span class="status-pill" id="connection-pill">Checking signal</span>
-            <span class="status-pill secondary" id="cache-pill">
-              Preparing offline cache
-            </span>
-          </div>
-        </div>
+      <header class="topbar">
+        <h1>Safari Bingo</h1>
+        <button class="icon-button" id="open-settings" type="button" aria-label="Open settings">
+          <span aria-hidden="true">⚙</span>
+        </button>
       </header>
 
       <main>
         <section class="section bingo-section">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">Bingo Board</p>
-              <h2>Tap a photo to log the sighting</h2>
-            </div>
-          </div>
-
           <div class="bingo-board-shell">
             <div class="bingo-board" id="bingo-board"></div>
           </div>
@@ -64,6 +39,53 @@
           <div class="animal-grid" id="animal-grid"></div>
         </section>
       </main>
+    </div>
+
+    <div class="settings-backdrop is-hidden" id="settings-page" aria-hidden="true">
+      <div class="settings-card" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+        <div class="settings-topbar">
+          <h2 id="settings-title">Settings</h2>
+          <button class="modal-close" id="close-settings" type="button" aria-label="Close settings">
+            ×
+          </button>
+        </div>
+
+        <div class="settings-stack">
+          <div class="settings-row">
+            <div>
+              <strong>Online now</strong>
+              <p class="settings-copy">Shows the current connection state.</p>
+            </div>
+            <span class="status-pill" id="connection-pill">Checking signal</span>
+          </div>
+
+          <div class="settings-row">
+            <div>
+              <strong>Share location</strong>
+              <p class="settings-copy" id="location-settings-copy">
+                Control whether Safari Bingo asks for geolocation during a sighting confirmation.
+              </p>
+            </div>
+            <label class="switch" aria-label="Share location">
+              <input id="share-location-toggle" type="checkbox" role="switch" />
+              <span class="switch-track" aria-hidden="true"></span>
+            </label>
+          </div>
+
+          <button class="settings-link is-hidden" id="open-location-settings" type="button">
+            Open location settings
+          </button>
+
+          <div class="settings-actions">
+            <button class="primary-button" id="shuffle-card" type="button">
+              Shuffle 4x4 Card
+            </button>
+            <button class="ghost-button" id="reset-progress" type="button">
+              Reset Sightings
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="modal-backdrop is-hidden" id="sighting-modal" aria-hidden="true">
