@@ -17,12 +17,11 @@
     <div class="page-shell">
       <header class="hero">
         <div class="hero-copy">
-          <p class="eyebrow">Offline-ready Safari Challenge</p>
+          <p class="eyebrow">Mobile-first Safari Bingo</p>
           <h1>Safari Bingo Tanzania</h1>
           <p class="hero-text">
-            Tap an animal tile, confirm the sighting, allow geolocation, and
-            optionally attach a photo from your device. For now the data stays
-            on this device so the app still works offline after the first load.
+            Tap a photo tile to log a sighting. The confirmation window asks for
+            your location and lets you upload an image from your device.
           </p>
           <div class="hero-actions">
             <button class="primary-button" id="shuffle-card" type="button">
@@ -32,101 +31,37 @@
               Reset Sightings
             </button>
           </div>
-        </div>
-        <aside class="hero-panel">
-          <div class="status-row">
+          <div class="hero-status">
             <span class="status-pill" id="connection-pill">Checking signal</span>
             <span class="status-pill secondary" id="cache-pill">
               Preparing offline cache
             </span>
           </div>
-          <div class="stats-grid" id="stats-grid"></div>
-        </aside>
+        </div>
       </header>
 
       <main>
         <section class="section bingo-section">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">Game Board</p>
-              <h2>Your 5x5 safari bingo card</h2>
+              <p class="eyebrow">Bingo Board</p>
+              <h2>Tap a photo to log the sighting</h2>
             </div>
-            <p class="section-note">
-              Each tile uses the animal photo. Tap a tile to inspect the animal,
-              upload evidence, and confirm the sighting with device location.
-            </p>
           </div>
 
-          <div class="bingo-layout">
-            <div class="bingo-board-shell">
-              <div class="bingo-board" id="bingo-board"></div>
-            </div>
-
-            <aside class="bingo-sidebar">
-              <div class="bingo-card-summary" id="bingo-summary"></div>
-
-              <div class="bingo-legend">
-                <div class="legend-item">
-                  <span class="legend-swatch seen"></span>
-                  Confirmed sighting
-                </div>
-                <div class="legend-item">
-                  <span class="legend-swatch big-five"></span>
-                  Big Five animal
-                </div>
-                <div class="legend-item">
-                  <span class="legend-swatch pending"></span>
-                  Open tile, not confirmed yet
-                </div>
-              </div>
-
-              <div class="roadmap-card">
-                <p class="eyebrow">Next Version</p>
-                <h3>Shared sightings</h3>
-                <p>
-                  These geotagged sightings are currently stored only on this
-                  device. A later version will sync them to a central database
-                  and feed a shared sightings map.
-                </p>
-              </div>
-            </aside>
+          <div class="bingo-board-shell">
+            <div class="bingo-board" id="bingo-board"></div>
           </div>
         </section>
 
         <section class="section">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">Species Library</p>
+              <p class="eyebrow">Animal List</p>
               <h2>Complete Tanzania animal list</h2>
             </div>
-            <p class="section-note">
-              Below the bingo card you can browse the full roster with richer
-              detail, last known local sighting on this device, and a direct way
-              to log a new confirmation.
-            </p>
           </div>
           <div class="animal-grid" id="animal-grid"></div>
-        </section>
-
-        <section class="section offline-section">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">Roadmap</p>
-              <h2>Heatmap and central storage later</h2>
-            </div>
-          </div>
-          <div class="offline-card">
-            <p>
-              The app already captures the pieces needed for the next phase:
-              species, timestamp, local coordinates, and optional image
-              evidence. In a later version we can move those records into a
-              shared database and generate a heatmap of sightings across trips.
-            </p>
-            <p class="offline-footnote">
-              Until then, everything stays in browser storage on the device that
-              recorded the sighting.
-            </p>
-          </div>
         </section>
       </main>
     </div>
@@ -148,46 +83,28 @@
 
             <div class="modal-meta" id="modal-meta"></div>
 
-            <div class="modal-stats">
-              <div class="modal-stat">
-                <span>Confirmed sightings</span>
-                <strong id="modal-count">0</strong>
-              </div>
-              <div class="modal-stat">
-                <span>Last recorded</span>
-                <strong id="modal-last-seen">No local record</strong>
-              </div>
-            </div>
-
             <div class="modal-location-card">
-              <strong>Last saved location</strong>
+              <strong>Device location</strong>
               <p id="modal-last-location">
-                No local coordinates saved for this animal yet.
+                Waiting for geolocation permission.
               </p>
             </div>
 
             <label class="upload-field" for="sighting-upload">
               <span>Upload a sighting photo</span>
               <input id="sighting-upload" type="file" accept="image/*" />
-              <small>
-                Optional for now. The photo is stored only on this device until
-                a future database-backed version exists.
-              </small>
             </label>
 
             <div class="upload-preview is-hidden" id="upload-preview">
               <img id="upload-preview-image" src="" alt="Selected sighting preview" />
               <div>
                 <strong id="upload-preview-label">No file selected</strong>
-                <p class="upload-preview-copy">
-                  The saved version is resized for local offline storage.
-                </p>
+                <p class="upload-preview-copy">Ready to save with this sighting.</p>
               </div>
             </div>
 
             <div class="modal-status" id="modal-status">
-              Confirming a sighting will ask the device for its current
-              geolocation.
+              Requesting device location...
             </div>
 
             <div class="modal-actions">
@@ -198,10 +115,6 @@
                 Confirm Sighting
               </button>
             </div>
-
-            <p class="photo-credit">
-              <a id="modal-source" href="#" target="_blank" rel="noreferrer">Photo source</a>
-            </p>
           </div>
         </div>
       </div>

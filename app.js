@@ -9,9 +9,7 @@ const animalMap = new Map(animals.map((animal) => [animal.id, animal]));
 const restAnimals = animals.filter((animal) => !BIG_FIVE_IDS.includes(animal.id));
 
 const bingoBoard = document.getElementById("bingo-board");
-const bingoSummary = document.getElementById("bingo-summary");
 const animalGrid = document.getElementById("animal-grid");
-const statsGrid = document.getElementById("stats-grid");
 const connectionPill = document.getElementById("connection-pill");
 const cachePill = document.getElementById("cache-pill");
 const shuffleButton = document.getElementById("shuffle-card");
@@ -27,11 +25,8 @@ const modalTitle = document.getElementById("modal-title");
 const modalScientific = document.getElementById("modal-scientific");
 const modalDescription = document.getElementById("modal-description");
 const modalMeta = document.getElementById("modal-meta");
-const modalCount = document.getElementById("modal-count");
-const modalLastSeen = document.getElementById("modal-last-seen");
 const modalLastLocation = document.getElementById("modal-last-location");
 const modalStatus = document.getElementById("modal-status");
-const modalSource = document.getElementById("modal-source");
 const sightingUpload = document.getElementById("sighting-upload");
 const uploadPreview = document.getElementById("upload-preview");
 const uploadPreviewImage = document.getElementById("upload-preview-image");
@@ -39,6 +34,7 @@ const uploadPreviewLabel = document.getElementById("upload-preview-label");
 
 let activeAnimalId = null;
 let draftPreviewUrl = null;
+let pendingLocation = null;
 
 let state = loadState();
 
@@ -228,147 +224,42 @@ function formatLocation(location) {
   return `${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)}${accuracy}`;
 }
 
-function computeBingoStats() {
-  const rows = [];
-  const columns = [];
-
-  for (let row = 0; row < GRID_SIZE; row += 1) {
-    rows.push(state.cardIds.slice(row * GRID_SIZE, row * GRID_SIZE + GRID_SIZE));
-  }
-
-  for (let column = 0; column < GRID_SIZE; column += 1) {
-    columns.push(
-      Array.from({ length: GRID_SIZE }, (_, row) => state.cardIds[row * GRID_SIZE + column]),
-    );
-  }
-
-  const diagonals = [
-    Array.from({ length: GRID_SIZE }, (_, index) => state.cardIds[index * GRID_SIZE + index]),
-    Array.from(
-      { length: GRID_SIZE },
-      (_, index) => state.cardIds[index * GRID_SIZE + (GRID_SIZE - 1 - index)],
-    ),
-  ];
-
-  const lines = [...rows, ...columns, ...diagonals];
-  const completedLines = lines.filter((line) => line.every((id) => hasSeen(id))).length;
-  const seenAnimals = animals.filter((animal) => hasSeen(animal.id)).length;
-  const totalSightings = animals.reduce((sum, animal) => sum + getSightingCount(animal.id), 0);
-  const geotaggedSightings = animals.reduce(
-    (sum, animal) => sum + getSightingEntry(animal.id).history.length,
-    0,
-  );
-
-  return {
-    seenAnimals,
-    totalSightings,
-    completedLines,
-    geotaggedSightings,
-    bigFiveSeen: BIG_FIVE_IDS.filter((id) => hasSeen(id)).length,
-    seenOnCard: state.cardIds.filter((id) => hasSeen(id)).length,
-  };
-}
-
-function renderStats(stats) {
-  const cards = [
-    {
-      label: "Species confirmed",
-      value: `${stats.seenAnimals}/${animals.length}`,
-      note: "Unique animals confirmed locally",
-    },
-    {
-      label: "Total sightings",
-      value: stats.totalSightings,
-      note: "Every confirmed tap with saved metadata",
-    },
-    {
-      label: "Big Five",
-      value: `${stats.bigFiveSeen}/5`,
-      note: "Confirmed members of the Big Five",
-    },
-    {
-      label: "Bingo lines",
-      value: stats.completedLines,
-      note: `${stats.geotaggedSightings} geotagged records on this device`,
-    },
-  ];
-
-  statsGrid.innerHTML = cards
-    .map(
-      (card) => `
-        <article class="stat-card">
-          <span>${card.label}</span>
-          <strong>${card.value}</strong>
-          <span>${card.note}</span>
-        </article>
-      `,
-    )
-    .join("");
-}
-
-function renderBingo(stats) {
+function renderBingo() {
   bingoBoard.innerHTML = state.cardIds
     .map((id) => {
       const animal = animalMap.get(id);
-      const count = getSightingCount(id);
-      const seenClass = count > 0 ? "is-seen" : "";
-      const bigFiveChip = BIG_FIVE_IDS.includes(id)
-        ? `<span class="tile-chip">Big Five</span>`
-        : `<span class="tile-chip">${animal.type}</span>`;
+      const seenClass = hasSeen(id) ? "is-seen" : "";
+      const seenBadge = hasSeen(id) ? `<span class="tile-seen-badge">Seen</span>` : "";
 
       return `
         <button class="bingo-tile ${seenClass}" type="button" data-action="open-modal" data-id="${id}">
           <img class="bingo-tile-image" src="${animal.image}" alt="${animal.name}" loading="lazy" />
           <span class="bingo-tile-content">
-            <span class="bingo-tile-top">
-              ${bigFiveChip}
-              <span class="tile-count">${count}</span>
-            </span>
-            <span>
-              <span class="bingo-tile-name">${animal.name}</span>
-              <span class="bingo-tile-caption">
-                ${count > 0 ? "Add another geotagged sighting" : "Open and confirm sighting"}
-              </span>
-            </span>
+            ${seenBadge}
+            <span class="bingo-tile-name">${animal.name}</span>
           </span>
         </button>
       `;
     })
     .join("");
-
-  const headline =
-    stats.completedLines > 0
-      ? `You have ${stats.completedLines} completed bingo line${stats.completedLines > 1 ? "s" : ""}.`
-      : "No completed bingo line yet.";
-
-  bingoSummary.innerHTML = `
-    <h3>${headline}</h3>
-    <p>
-      ${stats.seenOnCard} of ${CARD_SIZE} tiles on this card have at least one confirmed sighting.
-    </p>
-    <div class="summary-grid">
-      <div>
-        <span>Confirmed on board</span>
-        <strong>${stats.seenOnCard}</strong>
-      </div>
-      <div>
-        <span>Still open</span>
-        <strong>${CARD_SIZE - stats.seenOnCard}</strong>
-      </div>
-    </div>
-  `;
 }
 
 function renderAnimalList() {
   animalGrid.innerHTML = animals
     .map((animal) => {
       const entry = getSightingEntry(animal.id);
+      const lastSeenLine = entry.lastSeenAt
+        ? `<p class="animal-note">Last local sighting: ${formatDate(entry.lastSeenAt)}</p>`
+        : `<p class="animal-note">No local sighting saved yet.</p>`;
+      const locationLine = entry.latestLocation
+        ? `<p class="animal-note">Location: ${formatLocation(entry.latestLocation)}</p>`
+        : "";
       const latestImage = entry.latestImage
         ? `
           <div class="animal-evidence">
             <img src="${entry.latestImage.dataUrl}" alt="Latest ${animal.name} sighting upload" />
             <div>
-              <strong>Latest uploaded evidence</strong>
+              <strong>Latest uploaded image</strong>
               <p>${entry.latestImage.name}</p>
             </div>
           </div>
@@ -376,7 +267,7 @@ function renderAnimalList() {
         : "";
 
       return `
-        <article class="animal-card">
+        <article class="animal-card" role="button" tabindex="0" data-action="open-modal" data-id="${animal.id}">
           <img class="animal-photo" src="${animal.image}" alt="${animal.name}" loading="lazy" />
           <div class="animal-copy">
             <div class="animal-title-row">
@@ -394,35 +285,12 @@ function renderAnimalList() {
               <span class="meta-pill">${entry.count > 0 ? "Confirmed locally" : "Awaiting confirmation"}</span>
             </div>
 
-            <div class="animal-data-grid">
-              <div class="detail-card">
-                <span>Total confirmations</span>
-                <strong>${entry.count}</strong>
-              </div>
-              <div class="detail-card">
-                <span>Last recorded</span>
-                <strong>${formatDate(entry.lastSeenAt)}</strong>
-              </div>
-              <div class="detail-card">
-                <span>Latest coordinates</span>
-                <strong>${formatLocation(entry.latestLocation)}</strong>
-              </div>
-              <div class="detail-card">
-                <span>Saved local records</span>
-                <strong>${entry.history.length}</strong>
-              </div>
-            </div>
-
+            ${lastSeenLine}
+            ${locationLine}
             ${latestImage}
-
-            <div class="animal-actions">
-              <button class="primary-button" type="button" data-action="open-modal" data-id="${animal.id}">
-                Log Sighting
-              </button>
-              <p class="photo-credit">
-                <a href="${animal.source}" target="_blank" rel="noreferrer">Photo source</a>
-              </p>
-            </div>
+            <p class="photo-credit">
+              <a href="${animal.source}" target="_blank" rel="noreferrer">Photo source</a>
+            </p>
           </div>
         </article>
       `;
@@ -431,15 +299,34 @@ function renderAnimalList() {
 }
 
 function render() {
-  const stats = computeBingoStats();
-  renderStats(stats);
-  renderBingo(stats);
+  renderBingo();
   renderAnimalList();
 }
 
 function setModalStatus(message, isError = false) {
   modalStatus.textContent = message;
   modalStatus.classList.toggle("is-error", isError);
+}
+
+async function hydrateModalLocation() {
+  const requestId = activeAnimalId;
+  try {
+    setModalStatus("Requesting device location...");
+    const location = await requestGeolocation();
+    if (activeAnimalId !== requestId) {
+      return;
+    }
+    pendingLocation = location;
+    modalLastLocation.textContent = formatLocation(pendingLocation);
+    setModalStatus("Location ready. You can confirm the sighting now.");
+  } catch (error) {
+    if (activeAnimalId !== requestId) {
+      return;
+    }
+    pendingLocation = null;
+    modalLastLocation.textContent = error.message;
+    setModalStatus(error.message, true);
+  }
 }
 
 function clearDraftPreview() {
@@ -468,8 +355,8 @@ function openSightingModal(id) {
     return;
   }
 
-  const entry = getSightingEntry(id);
   activeAnimalId = id;
+  pendingLocation = null;
   clearDraftPreview();
   sightingUpload.value = "";
 
@@ -479,31 +366,29 @@ function openSightingModal(id) {
   modalDescription.textContent = animal.description;
   modalPhoto.src = animal.image;
   modalPhoto.alt = animal.name;
-  modalCount.textContent = String(entry.count);
-  modalLastSeen.textContent = formatDate(entry.lastSeenAt);
-  modalLastLocation.textContent = formatLocation(entry.latestLocation);
-  modalSource.href = animal.source;
   modalMeta.innerHTML = `
     <span class="meta-pill">${animal.region}</span>
     <span class="meta-pill">${BIG_FIVE_IDS.includes(id) ? "Big Five" : animal.type}</span>
   `;
 
+  const entry = getSightingEntry(id);
   if (entry.latestImage) {
     setPreviewImage(entry.latestImage.dataUrl, `Last saved upload: ${entry.latestImage.name}`);
   } else {
     setPreviewImage("", "");
   }
 
-  setModalStatus(
-    "Confirming a sighting will request the device location and save it only on this device for now.",
-  );
+  modalLastLocation.textContent = "Waiting for geolocation permission.";
+  setModalStatus("Requesting device location...");
 
   modal.classList.remove("is-hidden");
   modal.setAttribute("aria-hidden", "false");
+  hydrateModalLocation();
 }
 
 function closeSightingModal() {
   activeAnimalId = null;
+  pendingLocation = null;
   clearDraftPreview();
   sightingUpload.value = "";
   setPreviewImage("", "");
@@ -641,8 +526,11 @@ async function confirmSighting() {
   closeModalButton.disabled = true;
 
   try {
-    setModalStatus("Requesting device geolocation...");
-    const location = await requestGeolocation();
+    if (!pendingLocation) {
+      setModalStatus("Trying device location again...");
+      pendingLocation = await requestGeolocation();
+      modalLastLocation.textContent = formatLocation(pendingLocation);
+    }
 
     let latestImage = null;
     const upload = sightingUpload.files && sightingUpload.files[0];
@@ -656,16 +544,16 @@ async function confirmSighting() {
     const timestamp = new Date().toISOString();
     const historyRecord = {
       timestamp,
-      latitude: location.latitude,
-      longitude: location.longitude,
-      accuracy: location.accuracy,
+      latitude: pendingLocation.latitude,
+      longitude: pendingLocation.longitude,
+      accuracy: pendingLocation.accuracy,
       imageName: latestImage ? latestImage.name : null,
     };
 
     state.sightings[activeAnimalId] = {
       count: previous.count + 1,
       lastSeenAt: timestamp,
-      latestLocation: location,
+      latestLocation: pendingLocation,
       latestImage,
       history: [historyRecord, ...previous.history].slice(0, MAX_HISTORY),
     };
@@ -689,6 +577,10 @@ async function confirmSighting() {
 }
 
 function handleGlobalClick(event) {
+  if (event.target.closest("a")) {
+    return;
+  }
+
   const trigger = event.target.closest("[data-action]");
   if (trigger) {
     const { action, id } = trigger.dataset;
@@ -700,6 +592,18 @@ function handleGlobalClick(event) {
 
   if (event.target === modal) {
     closeSightingModal();
+  }
+}
+
+function handleAnimalGridKeydown(event) {
+  const card = event.target.closest("[data-action='open-modal']");
+  if (!card) {
+    return;
+  }
+
+  if (event.key === "Enter" || event.key === " ") {
+    event.preventDefault();
+    openSightingModal(card.dataset.id);
   }
 }
 
@@ -722,6 +626,7 @@ function handleUploadChange() {
 }
 
 document.addEventListener("click", handleGlobalClick);
+animalGrid.addEventListener("keydown", handleAnimalGridKeydown);
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !modal.classList.contains("is-hidden")) {
     closeSightingModal();
