@@ -1,5 +1,5 @@
 const BIG_FIVE_IDS = ["lion", "leopard", "elephant", "buffalo", "rhino"];
-const GRID_SIZE = 5;
+const GRID_SIZE = 4;
 const CARD_SIZE = GRID_SIZE * GRID_SIZE;
 const STORAGE_KEY = "safari-bingo-state-v2";
 const MAX_HISTORY = 12;
@@ -229,13 +229,11 @@ function renderBingo() {
     .map((id) => {
       const animal = animalMap.get(id);
       const seenClass = hasSeen(id) ? "is-seen" : "";
-      const seenBadge = hasSeen(id) ? `<span class="tile-seen-badge">Seen</span>` : "";
 
       return `
         <button class="bingo-tile ${seenClass}" type="button" data-action="open-modal" data-id="${id}">
           <img class="bingo-tile-image" src="${animal.image}" alt="${animal.name}" loading="lazy" />
           <span class="bingo-tile-content">
-            ${seenBadge}
             <span class="bingo-tile-name">${animal.name}</span>
           </span>
         </button>
@@ -282,7 +280,7 @@ function renderAnimalList() {
 
             <div class="animal-meta">
               <span class="meta-pill">${animal.region}</span>
-              <span class="meta-pill">${entry.count > 0 ? "Confirmed locally" : "Awaiting confirmation"}</span>
+              <span class="meta-pill">${entry.count > 0 ? "Seen" : "Awaiting confirmation"}</span>
             </div>
 
             ${lastSeenLine}
