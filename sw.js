@@ -1,11 +1,11 @@
-const CACHE_NAME = "safari-bingo-cache-v3";
+const CACHE_NAME = "safari-bingo-cache-v4";
 const ASSETS = [
   "/",
   "/index.html",
-  "/styles.css?v=20260406b",
-  "/data.js?v=20260406b",
-  "/app.js?v=20260406b",
-  "/manifest.webmanifest?v=20260406b",
+  "/styles.css?v=20260406c",
+  "/data.js?v=20260406c",
+  "/app.js?v=20260406c",
+  "/manifest.webmanifest?v=20260406c",
   "/public/icons/icon.svg",
   "/public/icons/mask-icon.svg",
   "/public/images/baboon.jpg",
@@ -22,6 +22,7 @@ const ASSETS = [
   "/public/images/hippo.jpg",
   "/public/images/hyena.jpg",
   "/public/images/impala.jpg",
+  "/public/images/jacksonpaul.jpg",
   "/public/images/leopard.jpg",
   "/public/images/lion.jpg",
   "/public/images/ostrich.jpg",

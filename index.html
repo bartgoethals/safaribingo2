@@ -8,10 +8,10 @@
       content="Safari Bingo is a mobile-first Tanzania safari bingo app with offline-ready sighting logging."
     />
     <meta name="theme-color" content="#8a4b1f" />
-    <link rel="manifest" href="/manifest.webmanifest?v=20260406b" />
+    <link rel="manifest" href="/manifest.webmanifest?v=20260406c" />
     <link rel="icon" href="/public/icons/icon.svg" type="image/svg+xml" />
     <title>Shikamoo Adventures Safari Bingo</title>
-    <link rel="stylesheet" href="/styles.css?v=20260406b" />
+    <link rel="stylesheet" href="/styles.css?v=20260406c" />
   </head>
   <body>
     <div class="page-shell">
@@ -118,25 +118,22 @@
             <p class="modal-scientific" id="modal-scientific"></p>
             <p class="modal-description" id="modal-description"></p>
 
-            <div class="modal-meta" id="modal-meta"></div>
-
-            <div class="modal-location-card">
-              <strong>Location pin</strong>
+            <div class="modal-meta-row">
+              <div class="modal-meta" id="modal-meta"></div>
               <a
-                class="map-link is-hidden"
+                class="modal-map-pin is-hidden"
                 id="modal-location-link"
                 href="#"
                 target="_blank"
                 rel="noreferrer"
+                aria-label="Open sighting locations in Google Maps"
+                title="Open sighting locations in Google Maps"
               >
-                📍 Open in Google Maps
+                📍
               </a>
-              <p id="modal-last-location">
-                Waiting for geolocation permission.
-              </p>
             </div>
 
-            <label class="upload-field" for="sighting-upload">
+            <label class="upload-field" id="sighting-upload-field" for="sighting-upload">
               <span>Upload a sighting photo</span>
               <input id="sighting-upload" type="file" accept="image/*" />
             </label>
@@ -149,11 +146,7 @@
               </div>
             </div>
 
-            <div class="modal-status" id="modal-status">
-              Requesting device location...
-            </div>
-
-            <div class="modal-actions">
+            <div class="modal-actions" id="modal-actions">
               <button class="ghost-button" id="cancel-sighting" type="button">
                 Cancel
               </button>
@@ -173,7 +166,7 @@
       </div>
     </noscript>
 
-    <script src="/data.js?v=20260406b"></script>
-    <script src="/app.js?v=20260406b"></script>
+    <script src="/data.js?v=20260406c"></script>
+    <script src="/app.js?v=20260406c"></script>
   </body>
 </html>

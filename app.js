@@ -3,6 +3,16 @@ const DEFAULT_GRID_SIZE = 4;
 const ALLOWED_GRID_SIZES = [4, 5];
 const STORAGE_KEY = "safari-bingo-state-v2";
 const MAX_HISTORY = 12;
+const GUIDE_TILE_ID = "jackson-paul";
+const GUIDE_TILE_INDEX = 12;
+const GUIDE_PROFILE = {
+  id: GUIDE_TILE_ID,
+  name: "Jackson Paul",
+  type: "Local Guide",
+  image: "/public/images/jacksonpaul.jpg",
+  description:
+    "My name is Jackson Paul, and I am a resident of Karatu in Arusha, Tanzania. I love showing people the value and enriching outcomes of travel and cultural activities. I believe that clients can benefit the most from travel when they get a chance to have meaningful interactions with communities and participate in cultural activities. I can make a difference for my clients through my local knowledge, and my passion about travel, education and cultural activities.",
+};
 
 const animals = window.SAFARI_ANIMALS || [];
 const animalMap = new Map(animals.map((animal) => [animal.id, animal]));
@@ -33,15 +43,16 @@ const modalTitle = document.getElementById("modal-title");
 const modalScientific = document.getElementById("modal-scientific");
 const modalDescription = document.getElementById("modal-description");
 const modalMeta = document.getElementById("modal-meta");
-const modalLastLocation = document.getElementById("modal-last-location");
 const modalLocationLink = document.getElementById("modal-location-link");
-const modalStatus = document.getElementById("modal-status");
+const sightingUploadField = document.getElementById("sighting-upload-field");
 const sightingUpload = document.getElementById("sighting-upload");
 const uploadPreview = document.getElementById("upload-preview");
 const uploadPreviewImage = document.getElementById("upload-preview-image");
 const uploadPreviewLabel = document.getElementById("upload-preview-label");
+const modalActions = document.getElementById("modal-actions");
 
 let activeAnimalId = null;
+let activeModalKind = "animal";
 let draftPreviewUrl = null;
 let pendingLocation = null;
 let locationPermissionState = "unknown";
@@ -62,6 +73,7 @@ function createDefaultSettings() {
   return {
     shareLocationEnabled: true,
     gridSize: DEFAULT_GRID_SIZE,
+    guideRevealed: false,
   };
 }
 
@@ -182,7 +194,16 @@ function sanitizeSettings(raw) {
     gridSize: ALLOWED_GRID_SIZES.includes(Number(raw.gridSize))
       ? Number(raw.gridSize)
       : DEFAULT_GRID_SIZE,
+    guideRevealed: raw.guideRevealed === true,
   };
+}
+
+function isBoardTileId(id) {
+  return animalMap.has(id) || id === GUIDE_TILE_ID;
+}
+
+function isGuideTile(id) {
+  return id === GUIDE_TILE_ID;
 }
 
 function shuffle(items) {
@@ -196,8 +217,37 @@ function shuffle(items) {
 
 function createRandomCardIds(gridSize = DEFAULT_GRID_SIZE) {
   const cardSize = getCardSize(gridSize);
-  const selectedRest = shuffle(restAnimals).slice(0, Math.max(0, cardSize - BIG_FIVE_IDS.length));
-  return shuffle([...BIG_FIVE_IDS, ...selectedRest.map((animal) => animal.id)]).slice(0, cardSize);
+  const extraSlots = gridSize === 5 ? 1 : 0;
+  const selectedRest = shuffle(restAnimals).slice(
+    0,
+    Math.max(0, cardSize - BIG_FIVE_IDS.length - extraSlots),
+  );
+  const cardIds = shuffle([...BIG_FIVE_IDS, ...selectedRest.map((animal) => animal.id)]).slice(
+    0,
+    cardSize - extraSlots,
+  );
+
+  if (gridSize === 5) {
+    cardIds.splice(GUIDE_TILE_INDEX, 0, GUIDE_TILE_ID);
+  }
+
+  return cardIds;
+}
+
+function isValidCardIds(cardIds, gridSize) {
+  if (cardIds.length !== getCardSize(gridSize)) {
+    return false;
+  }
+
+  if (!cardIds.every(isBoardTileId)) {
+    return false;
+  }
+
+  if (gridSize === 5) {
+    return cardIds[GUIDE_TILE_INDEX] === GUIDE_TILE_ID;
+  }
+
+  return !cardIds.includes(GUIDE_TILE_ID);
 }
 
 function loadState() {
@@ -205,11 +255,11 @@ function loadState() {
     const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
     const sightingsSource = parsed?.sightings || parsed;
     const settings = sanitizeSettings(parsed?.settings);
-    const cardIds = Array.isArray(parsed?.cardIds) ? parsed.cardIds.filter((id) => animalMap.has(id)) : [];
+    const cardIds = Array.isArray(parsed?.cardIds) ? parsed.cardIds.filter(isBoardTileId) : [];
 
     return {
       sightings: sanitizeSightings(sightingsSource),
-      cardIds: cardIds.length === getCardSize(settings.gridSize) ? cardIds : createRandomCardIds(settings.gridSize),
+      cardIds: isValidCardIds(cardIds, settings.gridSize) ? cardIds : createRandomCardIds(settings.gridSize),
       settings,
     };
   } catch (error) {
@@ -253,17 +303,37 @@ function formatDate(value) {
   return Number.isNaN(date.getTime()) ? "No local record" : date.toLocaleString();
 }
 
-function formatLocation(location) {
-  if (!location) {
-    return "No local coordinates saved yet";
-  }
-
-  const accuracy = location.accuracy ? ` ± ${Math.round(location.accuracy)}m` : "";
-  return `${location.latitude.toFixed(5)}, ${location.longitude.toFixed(5)}${accuracy}`;
-}
-
 function toGoogleMapsUrl(location) {
   return `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
+}
+
+function toGoogleMapsHistoryUrl(locations) {
+  if (!locations.length) {
+    return "";
+  }
+
+  if (locations.length === 1) {
+    const [location] = locations;
+    return `https://www.google.com/maps/search/?api=1&query=${location.latitude},${location.longitude}`;
+  }
+
+  const [origin, ...rest] = locations;
+  const destination = rest[rest.length - 1];
+  const waypoints = rest
+    .slice(0, -1)
+    .map((location) => `${location.latitude},${location.longitude}`)
+    .join("|");
+
+  const url = new URL("https://www.google.com/maps/dir/");
+  url.searchParams.set("api", "1");
+  url.searchParams.set("origin", `${origin.latitude},${origin.longitude}`);
+  url.searchParams.set("destination", `${destination.latitude},${destination.longitude}`);
+
+  if (waypoints) {
+    url.searchParams.set("waypoints", waypoints);
+  }
+
+  return url.toString();
 }
 
 function getAnimalNumber(id) {
@@ -286,22 +356,67 @@ function syncGridSizeUI() {
   updateShuffleLabel();
 }
 
-function setModalLocationState(message, location = null) {
-  modalLastLocation.textContent = message;
+function getUniqueLocations(locations) {
+  const seen = new Set();
 
-  if (location) {
-    modalLocationLink.href = toGoogleMapsUrl(location);
-    modalLocationLink.classList.remove("is-hidden");
+  return locations.filter((location) => {
+    if (!location) {
+      return false;
+    }
+
+    const key = `${location.latitude.toFixed(5)}:${location.longitude.toFixed(5)}`;
+    if (seen.has(key)) {
+      return false;
+    }
+
+    seen.add(key);
+    return true;
+  });
+}
+
+function getAnimalMapLocations(id, includePending = false) {
+  const entry = getSightingEntry(id);
+  const historyLocations = entry.history.map(sanitizeLocation).filter(Boolean);
+  const locations = includePending && pendingLocation ? [pendingLocation, ...historyLocations] : historyLocations;
+  return getUniqueLocations(locations);
+}
+
+function syncModalMapPin(id, includePending = false) {
+  const locations = getAnimalMapLocations(id, includePending);
+  const href = toGoogleMapsHistoryUrl(locations);
+
+  if (!href) {
+    modalLocationLink.classList.add("is-hidden");
+    modalLocationLink.removeAttribute("href");
     return;
   }
 
-  modalLocationLink.classList.add("is-hidden");
-  modalLocationLink.removeAttribute("href");
+  modalLocationLink.href = href;
+  modalLocationLink.classList.remove("is-hidden");
 }
 
 function renderBingo() {
   bingoBoard.innerHTML = state.cardIds
     .map((id) => {
+      if (isGuideTile(id)) {
+        const guideClass = state.settings.guideRevealed ? "is-guide-revealed" : "is-guide-tile";
+        const guideMarkup = state.settings.guideRevealed
+          ? `<img class="bingo-tile-photo" src="${GUIDE_PROFILE.image}" alt="${GUIDE_PROFILE.name}" loading="lazy" />`
+          : `<span class="bingo-tile-star" aria-hidden="true">★</span>`;
+
+        return `
+          <button
+            class="bingo-tile ${guideClass}"
+            type="button"
+            data-action="open-guide-modal"
+            data-id="${id}"
+            aria-label="Open profile for ${GUIDE_PROFILE.name}"
+          >
+            <span class="bingo-tile-content">${guideMarkup}</span>
+          </button>
+        `;
+      }
+
       const animal = animalMap.get(id);
       const seenClass = hasSeen(id) ? "is-seen" : "";
       const animalNumber = getAnimalNumber(id);
@@ -408,41 +523,27 @@ function closeSettingsPage() {
   settingsPage.setAttribute("aria-hidden", "true");
 }
 
-function setModalStatus(message, isError = false) {
-  modalStatus.textContent = message;
-  modalStatus.classList.toggle("is-error", isError);
-}
-
 async function hydrateModalLocation() {
   if (!state.settings.shareLocationEnabled) {
     pendingLocation = null;
-    setModalLocationState("Location sharing is off in Settings.");
-    setModalStatus("Turn on Share location in Settings to confirm a sighting.", true);
+    syncModalMapPin(activeAnimalId, false);
     return;
   }
 
   const requestId = activeAnimalId;
   try {
-    setModalStatus("Requesting device location...");
     const location = await requestGeolocation();
     if (activeAnimalId !== requestId) {
       return;
     }
     pendingLocation = location;
-    setModalLocationState(
-      pendingLocation.accuracy
-        ? `Accuracy ± ${Math.round(pendingLocation.accuracy)}m.`
-        : "Tap the pin to open the exact sighting location.",
-      pendingLocation,
-    );
-    setModalStatus("Location ready. You can confirm the sighting now.");
+    syncModalMapPin(activeAnimalId, true);
   } catch (error) {
     if (activeAnimalId !== requestId) {
       return;
     }
     pendingLocation = null;
-    setModalLocationState(error.message);
-    setModalStatus(error.message, true);
+    syncModalMapPin(activeAnimalId, false);
   }
 }
 
@@ -451,6 +552,22 @@ function clearDraftPreview() {
     URL.revokeObjectURL(draftPreviewUrl);
     draftPreviewUrl = null;
   }
+}
+
+function showAnimalModalControls() {
+  modalLocationLink.classList.remove("is-hidden");
+  sightingUploadField.hidden = false;
+  modalActions.hidden = false;
+  modalScientific.hidden = false;
+}
+
+function showGuideModalControls() {
+  modalLocationLink.classList.add("is-hidden");
+  modalLocationLink.removeAttribute("href");
+  sightingUploadField.hidden = true;
+  uploadPreview.classList.add("is-hidden");
+  modalActions.hidden = true;
+  modalScientific.hidden = true;
 }
 
 function setPreviewImage(src, label) {
@@ -472,10 +589,12 @@ function openSightingModal(id) {
     return;
   }
 
+  activeModalKind = "animal";
   activeAnimalId = id;
   pendingLocation = null;
   clearDraftPreview();
   sightingUpload.value = "";
+  showAnimalModalControls();
 
   modalType.textContent = animal.type;
   modalTitle.textContent = animal.name;
@@ -495,13 +614,7 @@ function openSightingModal(id) {
     setPreviewImage("", "");
   }
 
-  setModalLocationState("Waiting for geolocation permission.");
-  setModalStatus(
-    state.settings.shareLocationEnabled
-      ? "Requesting device location..."
-      : "Turn on Share location in Settings to confirm a sighting.",
-    !state.settings.shareLocationEnabled,
-  );
+  syncModalMapPin(id, false);
 
   modal.classList.remove("is-hidden");
   modal.setAttribute("aria-hidden", "false");
@@ -510,7 +623,35 @@ function openSightingModal(id) {
   }
 }
 
+function openGuideModal() {
+  activeModalKind = "guide";
+  activeAnimalId = null;
+  pendingLocation = null;
+  clearDraftPreview();
+  sightingUpload.value = "";
+  showGuideModalControls();
+
+  modalType.textContent = GUIDE_PROFILE.type;
+  modalTitle.textContent = GUIDE_PROFILE.name;
+  modalScientific.textContent = "";
+  modalDescription.textContent = GUIDE_PROFILE.description;
+  modalPhoto.src = GUIDE_PROFILE.image;
+  modalPhoto.alt = GUIDE_PROFILE.name;
+  modalMeta.innerHTML = `
+    <span class="meta-pill">Karatu, Arusha</span>
+    <span class="meta-pill">Cultural Travel</span>
+  `;
+
+  state.settings.guideRevealed = true;
+  saveState();
+  renderBingo();
+
+  modal.classList.remove("is-hidden");
+  modal.setAttribute("aria-hidden", "false");
+}
+
 function closeSightingModal() {
+  activeModalKind = "animal";
   activeAnimalId = null;
   pendingLocation = null;
   clearDraftPreview();
@@ -701,6 +842,10 @@ async function compressImage(file) {
 }
 
 async function confirmSighting() {
+  if (activeModalKind !== "animal") {
+    return;
+  }
+
   const animal = animalMap.get(activeAnimalId);
   if (!animal) {
     return;
@@ -716,21 +861,14 @@ async function confirmSighting() {
     }
 
     if (!pendingLocation) {
-      setModalStatus("Trying device location again...");
       pendingLocation = await requestGeolocation();
-      setModalLocationState(
-        pendingLocation.accuracy
-          ? `Accuracy ± ${Math.round(pendingLocation.accuracy)}m.`
-          : "Tap the pin to open the exact sighting location.",
-        pendingLocation,
-      );
+      syncModalMapPin(activeAnimalId, true);
     }
 
     let latestImage = null;
     const upload = sightingUpload.files && sightingUpload.files[0];
 
     if (upload) {
-      setModalStatus("Preparing uploaded image...");
       latestImage = await compressImage(upload);
     }
 
@@ -762,7 +900,7 @@ async function confirmSighting() {
       );
     }
   } catch (error) {
-    setModalStatus(error.message, true);
+    window.alert(error.message);
   } finally {
     confirmModalButton.disabled = false;
     cancelModalButton.disabled = false;
@@ -780,6 +918,9 @@ function handleGlobalClick(event) {
     const { action, id } = trigger.dataset;
     if (action === "open-modal") {
       openSightingModal(id);
+    }
+    if (action === "open-guide-modal") {
+      openGuideModal();
     }
     if (action === "scroll-to-animal") {
       scrollToAnimal(id);
