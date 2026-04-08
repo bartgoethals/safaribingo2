@@ -294,19 +294,6 @@ function hasSeen(id) {
   return getSightingCount(id) > 0;
 }
 
-function formatDate(value) {
-  if (!value) {
-    return "No local record";
-  }
-
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "No local record" : date.toLocaleString();
-}
-
-function toGoogleMapsUrl(location) {
-  return `https://www.google.com/maps?q=${location.latitude},${location.longitude}`;
-}
-
 function toGoogleMapsHistoryUrl(locations) {
   if (!locations.length) {
     return "";
@@ -442,31 +429,6 @@ function renderBingo() {
 function renderAnimalList() {
   animalGrid.innerHTML = animals
     .map((animal) => {
-      const entry = getSightingEntry(animal.id);
-      const lastSeenLine = entry.lastSeenAt
-        ? `<p class="animal-note">Last local sighting: ${formatDate(entry.lastSeenAt)}</p>`
-        : `<p class="animal-note">No local sighting saved yet.</p>`;
-      const locationLine = entry.latestLocation
-        ? `
-          <p class="animal-note">
-            <a class="map-link" href="${toGoogleMapsUrl(entry.latestLocation)}" target="_blank" rel="noreferrer">
-              📍 Open last sighting on Google Maps
-            </a>
-          </p>
-        `
-        : "";
-      const latestImage = entry.latestImage
-        ? `
-          <div class="animal-evidence">
-            <img src="${entry.latestImage.dataUrl}" alt="Latest ${animal.name} sighting upload" />
-            <div>
-              <strong>Latest uploaded image</strong>
-              <p>${entry.latestImage.name}</p>
-            </div>
-          </div>
-        `
-        : "";
-
       return `
         <article
           class="animal-card"
@@ -488,17 +450,6 @@ function renderAnimalList() {
               </div>
               <span class="animal-tag">${animal.type}</span>
             </div>
-
-            <p class="animal-description">${animal.description}</p>
-
-            <div class="animal-meta">
-              <span class="meta-pill">${animal.region}</span>
-              <span class="meta-pill">${entry.count > 0 ? "Seen" : "Awaiting confirmation"}</span>
-            </div>
-
-            ${lastSeenLine}
-            ${locationLine}
-            ${latestImage}
           </div>
         </article>
       `;
@@ -677,6 +628,7 @@ function resetSightings() {
   }
 
   state.sightings = sanitizeSightings({});
+  state.settings.guideRevealed = false;
   saveState();
   render();
 }
