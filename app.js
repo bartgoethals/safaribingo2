@@ -54,6 +54,7 @@ let activeAnimalId = null;
 let activeModalKind = "animal";
 let draftPreviewUrl = null;
 let pendingLocation = null;
+let pendingLocationSource = null;
 let locationPermissionState = "unknown";
 
 let state = loadState();
@@ -381,6 +382,183 @@ function syncModalMapPin(id, includePending = false) {
   modalLocationLink.classList.remove("is-hidden");
 }
 
+function readFileAsArrayBuffer(file) {
+  if (typeof file.arrayBuffer === "function") {
+    return file.arrayBuffer().then((buffer) => {
+      if (buffer instanceof ArrayBuffer) {
+        return buffer;
+      }
+
+      if (ArrayBuffer.isView(buffer)) {
+        return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+      }
+
+      return buffer;
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(new Error("Unable to read the selected image file."));
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function getExifString(view, offset, length) {
+  let value = "";
+
+  for (let index = 0; index < length; index += 1) {
+    value += String.fromCharCode(view.getUint8(offset + index));
+  }
+
+  return value;
+}
+
+function findExifBlock(view) {
+  if (view.byteLength < 4 || view.getUint16(0, false) !== 0xffd8) {
+    return null;
+  }
+
+  let offset = 2;
+  while (offset + 4 <= view.byteLength) {
+    if (view.getUint8(offset) !== 0xff) {
+      break;
+    }
+
+    const marker = view.getUint8(offset + 1);
+    if (marker === 0xda || marker === 0xd9) {
+      break;
+    }
+
+    const segmentLength = view.getUint16(offset + 2, false);
+    if (marker === 0xe1 && getExifString(view, offset + 4, 6) === "Exif\u0000\u0000") {
+      return offset + 10;
+    }
+
+    offset += segmentLength + 2;
+  }
+
+  return null;
+}
+
+function getTiffReader(view, tiffStart) {
+  const byteOrder = view.getUint16(tiffStart, false);
+  const littleEndian = byteOrder === 0x4949;
+
+  if (!littleEndian && byteOrder !== 0x4d4d) {
+    return null;
+  }
+
+  if (view.getUint16(tiffStart + 2, littleEndian) !== 42) {
+    return null;
+  }
+
+  return {
+    littleEndian,
+    getUint16(offset) {
+      return view.getUint16(offset, littleEndian);
+    },
+    getUint32(offset) {
+      return view.getUint32(offset, littleEndian);
+    },
+  };
+}
+
+function getIfdEntryOffset(reader, ifdOffset, tagId) {
+  const entryCount = reader.getUint16(ifdOffset);
+
+  for (let index = 0; index < entryCount; index += 1) {
+    const entryOffset = ifdOffset + 2 + index * 12;
+    if (reader.getUint16(entryOffset) === tagId) {
+      return entryOffset;
+    }
+  }
+
+  return null;
+}
+
+function readAsciiTag(view, entryOffset) {
+  return String.fromCharCode(view.getUint8(entryOffset + 8));
+}
+
+function readRationalArray(reader, tiffStart, entryOffset, count) {
+  const valueOffset = tiffStart + reader.getUint32(entryOffset + 8);
+  const values = [];
+
+  for (let index = 0; index < count; index += 1) {
+    const numerator = reader.getUint32(valueOffset + index * 8);
+    const denominator = reader.getUint32(valueOffset + index * 8 + 4);
+    values.push(denominator ? numerator / denominator : 0);
+  }
+
+  return values;
+}
+
+function toDecimalCoordinate(values, reference) {
+  if (!Array.isArray(values) || values.length < 3 || !reference) {
+    return null;
+  }
+
+  const decimal = values[0] + values[1] / 60 + values[2] / 3600;
+  return reference === "S" || reference === "W" ? -decimal : decimal;
+}
+
+async function extractImageGpsLocation(file) {
+  if (!file || !file.type.startsWith("image/")) {
+    return null;
+  }
+
+  const buffer = await readFileAsArrayBuffer(file);
+  const view = new DataView(buffer);
+  const tiffStart = findExifBlock(view);
+
+  if (tiffStart === null) {
+    return null;
+  }
+
+  const reader = getTiffReader(view, tiffStart);
+  if (!reader) {
+    return null;
+  }
+
+  const ifd0Offset = tiffStart + reader.getUint32(tiffStart + 4);
+  const gpsPointerEntry = getIfdEntryOffset(reader, ifd0Offset, 0x8825);
+
+  if (!gpsPointerEntry) {
+    return null;
+  }
+
+  const gpsIfdOffset = tiffStart + reader.getUint32(gpsPointerEntry + 8);
+  const latitudeRefEntry = getIfdEntryOffset(reader, gpsIfdOffset, 0x0001);
+  const latitudeEntry = getIfdEntryOffset(reader, gpsIfdOffset, 0x0002);
+  const longitudeRefEntry = getIfdEntryOffset(reader, gpsIfdOffset, 0x0003);
+  const longitudeEntry = getIfdEntryOffset(reader, gpsIfdOffset, 0x0004);
+
+  if (!latitudeRefEntry || !latitudeEntry || !longitudeRefEntry || !longitudeEntry) {
+    return null;
+  }
+
+  const latitude = toDecimalCoordinate(
+    readRationalArray(reader, tiffStart, latitudeEntry, 3),
+    readAsciiTag(view, latitudeRefEntry),
+  );
+  const longitude = toDecimalCoordinate(
+    readRationalArray(reader, tiffStart, longitudeEntry, 3),
+    readAsciiTag(view, longitudeRefEntry),
+  );
+
+  if (latitude === null || longitude === null) {
+    return null;
+  }
+
+  return {
+    latitude,
+    longitude,
+    accuracy: null,
+  };
+}
+
 function renderBingo() {
   bingoBoard.innerHTML = state.cardIds
     .map((id) => {
@@ -475,7 +653,10 @@ function closeSettingsPage() {
 
 async function hydrateModalLocation() {
   if (!state.settings.shareLocationEnabled) {
-    pendingLocation = null;
+    if (pendingLocationSource === "device" || pendingLocationSource === null) {
+      pendingLocation = null;
+      pendingLocationSource = null;
+    }
     syncModalMapPin(activeAnimalId, false);
     return;
   }
@@ -487,12 +668,16 @@ async function hydrateModalLocation() {
       return;
     }
     pendingLocation = location;
+    pendingLocationSource = "device";
     syncModalMapPin(activeAnimalId, true);
   } catch (error) {
     if (activeAnimalId !== requestId) {
       return;
     }
-    pendingLocation = null;
+    if (pendingLocationSource === "device" || pendingLocationSource === null) {
+      pendingLocation = null;
+      pendingLocationSource = null;
+    }
     syncModalMapPin(activeAnimalId, false);
   }
 }
@@ -542,6 +727,7 @@ function openSightingModal(id) {
   activeModalKind = "animal";
   activeAnimalId = id;
   pendingLocation = null;
+  pendingLocationSource = null;
   clearDraftPreview();
   sightingUpload.value = "";
   showAnimalModalControls();
@@ -577,6 +763,7 @@ function openGuideModal() {
   activeModalKind = "guide";
   activeAnimalId = null;
   pendingLocation = null;
+  pendingLocationSource = null;
   clearDraftPreview();
   sightingUpload.value = "";
   showGuideModalControls();
@@ -604,6 +791,7 @@ function closeSightingModal() {
   activeModalKind = "animal";
   activeAnimalId = null;
   pendingLocation = null;
+  pendingLocationSource = null;
   clearDraftPreview();
   sightingUpload.value = "";
   setPreviewImage("", "");
@@ -805,9 +993,13 @@ async function confirmSighting() {
     if (state.settings.shareLocationEnabled && !pendingLocation) {
       try {
         pendingLocation = await requestGeolocation();
+        pendingLocationSource = "device";
         syncModalMapPin(activeAnimalId, true);
       } catch (error) {
-        pendingLocation = null;
+        if (pendingLocationSource === "device" || pendingLocationSource === null) {
+          pendingLocation = null;
+          pendingLocationSource = null;
+        }
       }
     }
 
@@ -897,11 +1089,17 @@ function handleAnimalGridKeydown(event) {
   }
 }
 
-function handleUploadChange() {
+async function handleUploadChange() {
   clearDraftPreview();
 
   const file = sightingUpload.files && sightingUpload.files[0];
   if (!file) {
+    if (pendingLocationSource === "photo") {
+      pendingLocation = null;
+      pendingLocationSource = null;
+      syncModalMapPin(activeAnimalId, false);
+    }
+
     const entry = activeAnimalId ? getSightingEntry(activeAnimalId) : null;
     if (entry?.latestImage) {
       setPreviewImage(entry.latestImage.dataUrl, `Last saved upload: ${entry.latestImage.name}`);
@@ -913,6 +1111,31 @@ function handleUploadChange() {
 
   draftPreviewUrl = URL.createObjectURL(file);
   setPreviewImage(draftPreviewUrl, `Selected file: ${file.name}`);
+
+  try {
+    const imageLocation = await extractImageGpsLocation(file);
+
+    if (!imageLocation) {
+      if (pendingLocationSource === "photo") {
+        pendingLocation = null;
+        pendingLocationSource = null;
+        syncModalMapPin(activeAnimalId, false);
+      }
+      return;
+    }
+
+    if (!pendingLocation || pendingLocationSource === "photo") {
+      pendingLocation = imageLocation;
+      pendingLocationSource = "photo";
+      syncModalMapPin(activeAnimalId, true);
+    }
+  } catch (error) {
+    if (pendingLocationSource === "photo") {
+      pendingLocation = null;
+      pendingLocationSource = null;
+      syncModalMapPin(activeAnimalId, false);
+    }
+  }
 }
 
 function scrollToAnimal(id) {
@@ -938,7 +1161,10 @@ function scrollToAnimal(id) {
 async function handleLocationToggleChange() {
   if (!shareLocationToggle.checked) {
     state.settings.shareLocationEnabled = false;
-    pendingLocation = null;
+    if (pendingLocationSource === "device" || pendingLocationSource === null) {
+      pendingLocation = null;
+      pendingLocationSource = null;
+    }
     saveState();
     syncLocationSettingsUI();
     return;
