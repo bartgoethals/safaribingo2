@@ -31,7 +31,6 @@ const shareLocationToggle = document.getElementById("share-location-toggle");
 const openLocationSettingsButton = document.getElementById("open-location-settings");
 const locationSettingsCopy = document.getElementById("location-settings-copy");
 const shuffleButton = document.getElementById("shuffle-card");
-const resetButton = document.getElementById("reset-progress");
 
 const modal = document.getElementById("sighting-modal");
 const closeModalButton = document.getElementById("close-sighting");
@@ -332,7 +331,7 @@ function updateBoardLayout() {
 }
 
 function updateRestartLabel() {
-  shuffleButton.textContent = `Restart ${state.settings.gridSize}x${state.settings.gridSize} Card`;
+  shuffleButton.textContent = "Restart";
 }
 
 function syncGridSizeUI() {
@@ -624,21 +623,6 @@ function restartCard() {
   state.sightings = sanitizeSightings({});
   state.settings.guideRevealed = false;
   state.cardIds = createRandomCardIds(state.settings.gridSize);
-  saveState();
-  render();
-}
-
-function resetSightings() {
-  const confirmed = window.confirm(
-    "Reset all local sightings, saved coordinates, and uploaded evidence while keeping the current card order?",
-  );
-
-  if (!confirmed) {
-    return;
-  }
-
-  state.sightings = sanitizeSightings({});
-  state.settings.guideRevealed = false;
   saveState();
   render();
 }
@@ -1010,7 +994,6 @@ closeSettingsButton.addEventListener("click", closeSettingsPage);
 gridSize4Button.addEventListener("click", handleGridSizeChange);
 gridSize5Button.addEventListener("click", handleGridSizeChange);
 shuffleButton.addEventListener("click", restartCard);
-resetButton.addEventListener("click", resetSightings);
 closeModalButton.addEventListener("click", closeSightingModal);
 cancelModalButton.addEventListener("click", closeSightingModal);
 confirmModalButton.addEventListener("click", confirmSighting);
