@@ -331,8 +331,8 @@ function updateBoardLayout() {
   bingoBoard.style.setProperty("--grid-size", String(state.settings.gridSize));
 }
 
-function updateShuffleLabel() {
-  shuffleButton.textContent = `Shuffle ${state.settings.gridSize}x${state.settings.gridSize} Card`;
+function updateRestartLabel() {
+  shuffleButton.textContent = `Restart ${state.settings.gridSize}x${state.settings.gridSize} Card`;
 }
 
 function syncGridSizeUI() {
@@ -340,7 +340,7 @@ function syncGridSizeUI() {
   gridSize4Button.classList.toggle("is-active", gridSize === 4);
   gridSize5Button.classList.toggle("is-active", gridSize === 5);
   updateBoardLayout();
-  updateShuffleLabel();
+  updateRestartLabel();
 }
 
 function getUniqueLocations(locations) {
@@ -612,7 +612,17 @@ function closeSightingModal() {
   modal.setAttribute("aria-hidden", "true");
 }
 
-function refreshCard() {
+function restartCard() {
+  const confirmed = window.confirm(
+    "Restart this safari card? This will wipe all sightings, reset Jackson Paul, and shuffle a new bingo card.",
+  );
+
+  if (!confirmed) {
+    return;
+  }
+
+  state.sightings = sanitizeSightings({});
+  state.settings.guideRevealed = false;
   state.cardIds = createRandomCardIds(state.settings.gridSize);
   saveState();
   render();
@@ -687,16 +697,16 @@ async function syncLocationSettingsUI() {
 
   if (locationPermissionState === "granted" && state.settings.shareLocationEnabled) {
     locationSettingsCopy.textContent =
-      "Safari Bingo will collect your location while you confirm a sighting.";
+      "Safari Bingo can attach your location when it is available.";
   } else if (locationPermissionState === "denied") {
     locationSettingsCopy.textContent =
       "Location access is blocked in your browser or device settings. Turn the switch on to reopen settings.";
   } else if (!state.settings.shareLocationEnabled) {
     locationSettingsCopy.textContent =
-      "Location sharing is off for this app. Turn it on when you want to log coordinates.";
+      "Location sharing is off for this app. Turn it on when you want to attach coordinates.";
   } else {
     locationSettingsCopy.textContent =
-      "Safari Bingo will ask for geolocation during a sighting confirmation.";
+      "Safari Bingo can ask for geolocation during a sighting confirmation.";
   }
 
   openLocationSettingsButton.classList.toggle(
@@ -732,7 +742,7 @@ function requestGeolocation() {
         });
       },
       (error) => {
-        let message = "Location permission is required to confirm a sighting.";
+        let message = "Location permission was denied.";
 
         if (error.code === error.TIMEOUT) {
           message = "Timed out while waiting for device location. Try again with a stronger signal.";
@@ -808,13 +818,13 @@ async function confirmSighting() {
   closeModalButton.disabled = true;
 
   try {
-    if (!state.settings.shareLocationEnabled) {
-      throw new Error("Turn on Share location in Settings to confirm a sighting.");
-    }
-
-    if (!pendingLocation) {
-      pendingLocation = await requestGeolocation();
-      syncModalMapPin(activeAnimalId, true);
+    if (state.settings.shareLocationEnabled && !pendingLocation) {
+      try {
+        pendingLocation = await requestGeolocation();
+        syncModalMapPin(activeAnimalId, true);
+      } catch (error) {
+        pendingLocation = null;
+      }
     }
 
     let latestImage = null;
@@ -826,20 +836,22 @@ async function confirmSighting() {
 
     const previous = getSightingEntry(activeAnimalId);
     const timestamp = new Date().toISOString();
-    const historyRecord = {
-      timestamp,
-      latitude: pendingLocation.latitude,
-      longitude: pendingLocation.longitude,
-      accuracy: pendingLocation.accuracy,
-      imageName: latestImage ? latestImage.name : null,
-    };
+    const historyRecord = pendingLocation
+      ? {
+          timestamp,
+          latitude: pendingLocation.latitude,
+          longitude: pendingLocation.longitude,
+          accuracy: pendingLocation.accuracy,
+          imageName: latestImage ? latestImage.name : null,
+        }
+      : null;
 
     state.sightings[activeAnimalId] = {
       count: previous.count + 1,
       lastSeenAt: timestamp,
-      latestLocation: pendingLocation,
+      latestLocation: pendingLocation || previous.latestLocation,
       latestImage,
-      history: [historyRecord, ...previous.history].slice(0, MAX_HISTORY),
+      history: historyRecord ? [historyRecord, ...previous.history].slice(0, MAX_HISTORY) : previous.history,
     };
 
     const persisted = saveState();
@@ -997,7 +1009,7 @@ openSettingsButton.addEventListener("click", openSettingsPage);
 closeSettingsButton.addEventListener("click", closeSettingsPage);
 gridSize4Button.addEventListener("click", handleGridSizeChange);
 gridSize5Button.addEventListener("click", handleGridSizeChange);
-shuffleButton.addEventListener("click", refreshCard);
+shuffleButton.addEventListener("click", restartCard);
 resetButton.addEventListener("click", resetSightings);
 closeModalButton.addEventListener("click", closeSightingModal);
 cancelModalButton.addEventListener("click", closeSightingModal);
